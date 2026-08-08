@@ -1,0 +1,25 @@
+{
+  "name": "careconnect-backend",
+  "version": "0.1.0",
+  "description": "Enterprise Healthcare REST API",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "nodemon": "^3.1.14",
+    "tsx": "^4.23.11",
+    "typescript": "^7.0.2"
+  }
+}
