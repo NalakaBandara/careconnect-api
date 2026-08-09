@@ -9,7 +9,7 @@ app.use(express.json());
 app.get('/health', (req, res) => {
 
     res.status(200).json({
-        application: 'Career Connect API',
+        application: 'Career Connect API [Node.js]',
         version: '1.0.0',
         status: 'healthy',
         timestamp: new Date().toISOString()
