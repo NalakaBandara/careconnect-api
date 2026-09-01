@@ -9,6 +9,10 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+    // ============================================================
+    // 1. Seed Roles
+    // ============================================================
+
     const roles = [
         {
             name: "ADMIN",
@@ -45,6 +49,61 @@ async function main() {
     }
 
     console.log("Roles seeded successfully.");
+
+    // ============================================================
+    // 2. Create Test Patient
+    // ============================================================
+
+    const patient = await prisma.user.upsert({
+        where: {
+            auth0UserId: "auth0|6a96b401f89098774ecdb0d7",
+        },
+        update: {
+            email: "john@gmail.com",
+            firstName: "John",
+            lastName: "Smith",
+            status: "ACTIVE",
+        },
+        create: {
+            email: "john@gmail.com",
+            auth0UserId: "auth0|6a96b401f89098774ecdb0d7",
+            firstName: "John",
+            lastName: "Smith",
+            status: "ACTIVE",
+        },
+    });
+
+    console.log("Patient seeded successfully:", patient.email);
+
+    // ============================================================
+    // 3. Assign PATIENT Role
+    // ============================================================
+
+    const patientRole = await prisma.role.findUnique({
+        where: {
+            name: "PATIENT",
+        },
+    });
+
+    if (!patientRole) {
+        throw new Error("PATIENT role not found");
+    }
+
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: patient.id,
+                roleId: patientRole.id,
+            },
+        },
+        update: {},
+        create: {
+            userId: patient.id,
+            roleId: patientRole.id,
+        },
+    });
+
+    console.log("PATIENT role assigned successfully.");
 }
 
 main()
