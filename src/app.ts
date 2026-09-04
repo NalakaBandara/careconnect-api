@@ -2,7 +2,15 @@ import express from 'express';
 import { prisma } from './config/prisma.js';
 import { checkJwt } from './middleware/auth0.middleware.js';
 import { loadCurrentUser } from './middleware/current-user.middleware.js';
+import { requireScopes } from './middleware/scope.middleware.js';
+import { SCOPES } from './config/scopes.js';
 import userRoutes from "./routes/user.routes.js";
+import clinicRoutes from "./routes/clinic.routes.js";
+import doctorRoutes from "./routes/doctor.routes.js";
+import specialtyRoutes from "./routes/specialty.routes.js";
+import serviceRoutes from "./routes/service.routes.js";
+import appointmentRoutes from "./routes/appointment.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 const app = express();
 
@@ -63,6 +71,38 @@ app.get(
 
 // User routes
 app.use("/api/v1/users", userRoutes);
+
+// Clinic routes
+app.use("/api/v1/clinics", clinicRoutes);
+
+// Doctor routes
+app.use("/api/v1/doctors", doctorRoutes);
+
+// Specialty routes
+app.use("/api/v1/specialties", specialtyRoutes);
+
+// Service routes
+app.use("/api/v1/services", serviceRoutes);
+
+// Notification routes
+app.use("/api/v1/notifications", notificationRoutes);
+
+// Appointment routes
+app.use("/api/v1/appointments", appointmentRoutes);
+
+// M2M (client_credentials) demo endpoint - authorized via scope, not user roles
+app.get(
+    '/api/m2m/ping',
+    checkJwt,
+    requireScopes(SCOPES.READ_SYSTEM),
+    (req, res) => {
+        res.status(200).json({
+            message: 'M2M token authorized',
+            clientId: req.auth?.payload?.sub,
+            scopes: (req.auth?.payload?.scope as string | undefined)?.split(' ') ?? []
+        });
+    }
+);
 
 
 export default app;
