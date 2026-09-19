@@ -9,6 +9,7 @@ import {
     updateClinic,
     deleteClinic,
     getClinicOperatingHours,
+    createClinicOperatingHour,
     updateClinicOperatingHours,
     getClinicDoctors,
     getClinicServices,
@@ -28,6 +29,13 @@ router.post("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), createClinic)
 router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN", "CLINIC_ADMIN"), updateClinic);
 router.delete("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), deleteClinic);
 router.get("/:id/operating-hours", checkJwt, loadCurrentUser, getClinicOperatingHours);
+router.post(
+    "/:id/operating-hours",
+    checkJwt,
+    loadCurrentUser,
+    requireRoles("ADMIN", "CLINIC_ADMIN"),
+    createClinicOperatingHour
+);
 router.put(
     "/:id/operating-hours",
     checkJwt,

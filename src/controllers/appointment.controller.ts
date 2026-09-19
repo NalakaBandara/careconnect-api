@@ -187,6 +187,7 @@ export const createAppointment = async (req: Request, res: Response) => {
         const currentUser = res.locals.user;
 
         const {
+            patientId,
             doctorProfileId,
             clinicId,
             serviceId,
@@ -197,6 +198,36 @@ export const createAppointment = async (req: Request, res: Response) => {
             reason,
             notes,
         } = req.body;
+
+        // Patients always book for themselves; ADMIN may book on behalf of another patient via patientId
+        let effectivePatientId: bigint = currentUser.id;
+
+        if (patientId !== undefined) {
+            const parsedPatientId = parseId(patientId);
+
+            if (parsedPatientId === null) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "patientId must be a valid numeric identifier",
+                    },
+                });
+            }
+
+            const roleNames: string[] =
+                currentUser?.userRoles?.map((userRole: any) => userRole.role.name) ?? [];
+
+            if (parsedPatientId !== currentUser.id && !roleNames.includes("ADMIN")) {
+                return res.status(403).json({
+                    error: {
+                        code: "FORBIDDEN",
+                        message: "You can only create appointments for yourself",
+                    },
+                });
+            }
+
+            effectivePatientId = parsedPatientId;
+        }
 
         const parsedDoctorProfileId = parseId(doctorProfileId);
         const parsedClinicId = parseId(clinicId);
@@ -221,18 +252,21 @@ export const createAppointment = async (req: Request, res: Response) => {
             });
         }
 
-        const [doctorProfile, clinic, service, doctorSchedule] = await Promise.all([
+        const [doctorProfile, clinic, service, doctorSchedule, patient] = await Promise.all([
             prisma.doctorProfile.findUnique({ where: { id: parsedDoctorProfileId } }),
             prisma.clinic.findUnique({ where: { id: parsedClinicId } }),
             prisma.service.findUnique({ where: { id: parsedServiceId } }),
             prisma.doctorSchedule.findUnique({ where: { id: parsedDoctorScheduleId } }),
+            effectivePatientId === currentUser.id
+                ? Promise.resolve(currentUser)
+                : prisma.user.findUnique({ where: { id: effectivePatientId } }),
         ]);
 
-        if (!doctorProfile || !clinic || !service || !doctorSchedule) {
+        if (!doctorProfile || !clinic || !service || !doctorSchedule || !patient) {
             return res.status(404).json({
                 error: {
                     code: "NOT_FOUND",
-                    message: "Doctor, clinic, service or schedule not found",
+                    message: "Doctor, clinic, service, schedule or patient not found",
                 },
             });
         }
@@ -272,7 +306,7 @@ export const createAppointment = async (req: Request, res: Response) => {
 
         const appointment = await prisma.appointment.create({
             data: {
-                patientId: currentUser.id,
+                patientId: effectivePatientId,
                 doctorProfileId: parsedDoctorProfileId,
                 clinicId: parsedClinicId,
                 serviceId: parsedServiceId,

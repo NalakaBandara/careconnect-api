@@ -230,6 +230,107 @@ export const createMyProfile = async (req: Request, res: Response) => {
     }
 };
 
+// ADMIN-only provisioning; unlike createMyProfile this accepts an explicit auth0UserId
+// so an admin can pre-create a user record before that person has ever logged in
+export const createUser = async (req: Request, res: Response) => {
+    try {
+        const {
+            email,
+            firstName,
+            lastName,
+            dateOfBirth,
+            phone,
+            nic,
+            auth0UserId,
+            status,
+        } = req.body;
+
+        if (!email || !firstName || !lastName || !auth0UserId) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "email, firstName, lastName and auth0UserId are required",
+                },
+            });
+        }
+
+        const patientRole = await prisma.role.findUnique({
+            where: {
+                name: "PATIENT",
+            },
+        });
+
+        if (!patientRole) {
+            return res.status(500).json({
+                error: {
+                    code: "ROLE_NOT_FOUND",
+                    message: "PATIENT role not configured",
+                },
+            });
+        }
+
+        const user = await prisma.user.create({
+            data: {
+                auth0UserId,
+                email,
+                firstName,
+                lastName,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                phone: phone || null,
+                nic: nic || null,
+                status: status || "ACTIVE",
+                userRoles: {
+                    create: {
+                        roleId: patientRole.id,
+                    },
+                },
+            },
+            include: {
+                userRoles: {
+                    include: {
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        return res.status(201).json({
+            data: {
+                id: user.id.toString(),
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                dateOfBirth: user.dateOfBirth,
+                phone: user.phone,
+                nic: user.nic,
+                profilePhoto: user.profilePhoto,
+                status: user.status,
+                roles: user.userRoles.map(
+                    (userRole) => userRole.role.name
+                ),
+            },
+        });
+    } catch (error: any) {
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "A user with this email, auth0UserId or NIC already exists",
+                },
+            });
+        }
+
+        console.error("Create user failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to create user",
+            },
+        });
+    }
+};
+
 export const updateMyProfile = async (req: Request, res: Response) => {
     try {
         // loadCurrentUser has already resolved and attached the DB row

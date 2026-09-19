@@ -19,6 +19,7 @@ import doctorClinicRoutes from "./routes/doctorClinic.routes.js";
 import doctorScheduleRoutes from "./routes/doctorSchedule.routes.js";
 import doctorServiceRoutes from "./routes/doctorService.routes.js";
 import doctorSpecialtyRoutes from "./routes/doctorSpecialty.routes.js";
+import checkinRoutes from "./routes/checkin.routes.js";
 
 const app = express();
 
@@ -111,6 +112,7 @@ app.use("/api/v1/doctor-clinics", doctorClinicRoutes);
 app.use("/api/v1/doctor-schedules", doctorScheduleRoutes);
 app.use("/api/v1/doctor-services", doctorServiceRoutes);
 app.use("/api/v1/doctor-specialties", doctorSpecialtyRoutes);
+app.use("/api/v1/check-ins", checkinRoutes);
 
 // M2M (client_credentials) demo endpoint - authorized via scope, not user roles
 app.get(
