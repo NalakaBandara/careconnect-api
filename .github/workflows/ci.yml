@@ -11,6 +11,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # prisma.config.ts requires DATABASE_URL to resolve; validate/generate don't connect to it
+      DATABASE_URL: postgresql://user:password@localhost:5432/careconnect_ci
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
