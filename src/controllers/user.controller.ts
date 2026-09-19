@@ -65,8 +65,8 @@ export const getMyProfile = async (req: Request, res: Response) => {
 
 export const createMyProfile = async (req: Request, res: Response) => {
     try {
-        const auth0UserId = "auth0|dev-doctor-user-new";
-        const email = "new.email@gmail.com";
+        const auth0UserId = req.auth?.payload?.sub;
+        const email = (req.auth?.payload?.email as string | undefined) || req.body.email;
 
         if (!auth0UserId) {
             return res.status(401).json({
@@ -77,9 +77,14 @@ export const createMyProfile = async (req: Request, res: Response) => {
             });
         }
 
-       
-
-        
+        if (!email) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "email is required",
+                },
+            });
+        }
 
         const {
             firstName,
