@@ -379,3 +379,110 @@ export const getUserById = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const updateUserById = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        let userId: bigint;
+
+        try {
+            userId = BigInt(id as string);
+        } catch {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "id must be a valid numeric identifier",
+                },
+            });
+        }
+
+        const {
+            firstName,
+            lastName,
+            dateOfBirth,
+            phone,
+            profilePhoto,
+            nic,
+            nicPhoto,
+            status,
+        } = req.body;
+
+        if (!firstName || !lastName) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "firstName and lastName are required",
+                },
+            });
+        }
+
+        const user = await prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                firstName,
+                lastName,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                phone: phone || null,
+                profilePhoto: profilePhoto || null,
+                nic: nic || null,
+                nicPhoto: nicPhoto || null,
+                status: status || undefined,
+            },
+            include: {
+                userRoles: {
+                    include: {
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        return res.status(200).json({
+            data: {
+                id: user.id.toString(),
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                dateOfBirth: user.dateOfBirth,
+                phone: user.phone,
+                profilePhoto: user.profilePhoto,
+                nic: user.nic,
+                nicPhoto: user.nicPhoto,
+                status: user.status,
+                roles: user.userRoles.map(
+                    (userRole) => userRole.role.name
+                ),
+            },
+        });
+    } catch (error: any) {
+        if (error?.code === "P2025") {
+            return res.status(404).json({
+                error: {
+                    code: "USER_NOT_FOUND",
+                    message: "CareConnect user not found",
+                },
+            });
+        }
+
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "NIC is already registered to another user",
+                },
+            });
+        }
+
+        console.error("Update user by id failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to update user",
+            },
+        });
+    }
+};

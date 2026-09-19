@@ -9,6 +9,7 @@ import {
     createMyProfile,
     updateMyProfile,
     getUserById,
+    updateUserById,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -18,5 +19,6 @@ router.get("/me", checkJwt, loadCurrentUser, getMyProfile);
 router.post("/me", checkJwt, rejectM2MTokens, createMyProfile);
 router.put("/me", checkJwt, loadCurrentUser, updateMyProfile);
 router.get("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), getUserById);
+router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), updateUserById);
 
 export default router;
