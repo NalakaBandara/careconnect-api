@@ -948,4 +948,442 @@ export const removeDoctorClinic = async (req: Request, res: Response) => {
     }
 };
 
+// Flat alias for addDoctorClinic: doctorProfileId comes from the request body instead of the URL
+export const createDoctorClinic = async (req: Request, res: Response) => {
+    try {
+        const doctorProfileId = parseId(req.body.doctorProfileId);
+        const clinicId = parseId(req.body.clinicId);
+
+        if (doctorProfileId === null || clinicId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "doctorProfileId and clinicId are required and must be valid numeric identifiers",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!canManageDoctor(currentUser, doctorProfileId)) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this doctor",
+                },
+            });
+        }
+
+        const [doctor, clinic] = await Promise.all([
+            prisma.doctorProfile.findUnique({ where: { id: doctorProfileId } }),
+            prisma.clinic.findUnique({ where: { id: clinicId } }),
+        ]);
+
+        if (!doctor || !clinic) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Doctor or clinic not found",
+                },
+            });
+        }
+
+        await prisma.doctorClinic.create({
+            data: {
+                doctorProfileId,
+                clinicId,
+            },
+        });
+
+        return res.status(201).json({
+            doctorId: doctorProfileId.toString(),
+            clinicId: clinicId.toString(),
+        });
+    } catch (error: any) {
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "This clinic is already linked to this doctor",
+                },
+            });
+        }
+
+        console.error("Create doctor clinic failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to add clinic to doctor",
+            },
+        });
+    }
+};
+
+// Flat alias for addDoctorSpecialty: doctorProfileId comes from the request body instead of the URL
+export const createDoctorSpecialty = async (req: Request, res: Response) => {
+    try {
+        const doctorProfileId = parseId(req.body.doctorProfileId);
+        const specialtyId = parseId(req.body.specialtyId);
+
+        if (doctorProfileId === null || specialtyId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "doctorProfileId and specialtyId are required and must be valid numeric identifiers",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!canManageDoctor(currentUser, doctorProfileId)) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this doctor",
+                },
+            });
+        }
+
+        const [doctor, specialty] = await Promise.all([
+            prisma.doctorProfile.findUnique({ where: { id: doctorProfileId } }),
+            prisma.specialty.findUnique({ where: { id: specialtyId } }),
+        ]);
+
+        if (!doctor || !specialty) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Doctor or specialty not found",
+                },
+            });
+        }
+
+        await prisma.doctorSpecialty.create({
+            data: {
+                doctorProfileId,
+                specialtyId,
+            },
+        });
+
+        return res.status(201).json({
+            doctorId: doctorProfileId.toString(),
+            specialtyId: specialtyId.toString(),
+        });
+    } catch (error: any) {
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "This specialty is already linked to this doctor",
+                },
+            });
+        }
+
+        console.error("Create doctor specialty failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to add specialty to doctor",
+            },
+        });
+    }
+};
+
+// Flat alias linking DoctorService (doctorProfileId + serviceId come from the request body)
+export const createDoctorService = async (req: Request, res: Response) => {
+    try {
+        const doctorProfileId = parseId(req.body.doctorProfileId);
+        const serviceId = parseId(req.body.serviceId);
+
+        if (doctorProfileId === null || serviceId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "doctorProfileId and serviceId are required and must be valid numeric identifiers",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!canManageDoctor(currentUser, doctorProfileId)) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this doctor",
+                },
+            });
+        }
+
+        const [doctor, service] = await Promise.all([
+            prisma.doctorProfile.findUnique({ where: { id: doctorProfileId } }),
+            prisma.service.findUnique({ where: { id: serviceId } }),
+        ]);
+
+        if (!doctor || !service) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Doctor or service not found",
+                },
+            });
+        }
+
+        await prisma.doctorService.create({
+            data: {
+                doctorProfileId,
+                serviceId,
+            },
+        });
+
+        return res.status(201).json({
+            doctorId: doctorProfileId.toString(),
+            serviceId: serviceId.toString(),
+        });
+    } catch (error: any) {
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "This service is already linked to this doctor",
+                },
+            });
+        }
+
+        console.error("Create doctor service failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to add service to doctor",
+            },
+        });
+    }
+};
+
+// Flat alias for GET /doctors/:id/schedules; supports filtering by doctorId and/or clinicId query params
+export const getDoctorSchedulesFlat = async (req: Request, res: Response) => {
+    try {
+        const { doctorId, clinicId } = req.query;
+
+        const where: any = {};
+
+        const parsedDoctorId = parseId(doctorId as string | string[] | undefined);
+        const parsedClinicId = parseId(clinicId as string | string[] | undefined);
+
+        if (doctorId && parsedDoctorId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "doctorId must be a valid numeric identifier",
+                },
+            });
+        }
+
+        if (clinicId && parsedClinicId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "clinicId must be a valid numeric identifier",
+                },
+            });
+        }
+
+        if (parsedDoctorId !== null) {
+            where.doctorProfileId = parsedDoctorId;
+        }
+
+        if (parsedClinicId !== null) {
+            where.clinicId = parsedClinicId;
+        }
+
+        const schedules = await prisma.doctorSchedule.findMany({
+            where,
+            orderBy: { id: "asc" },
+        });
+
+        return res.status(200).json({
+            data: schedules.map((schedule) => ({
+                id: schedule.id.toString(),
+                doctorProfileId: schedule.doctorProfileId.toString(),
+                clinicId: schedule.clinicId.toString(),
+                dayOfWeek: DAYS_OF_WEEK[schedule.dayOfWeek],
+                startTime: formatTime(schedule.startTime),
+                endTime: formatTime(schedule.endTime),
+                slotDurationMinutes: schedule.slotDurationMinutes,
+                isActive: schedule.isActive,
+            })),
+        });
+    } catch (error) {
+        console.error("List doctor schedules failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to retrieve doctor schedules",
+            },
+        });
+    }
+};
+
+// Flat alias for createDoctorSchedule: doctorProfileId comes from the request body instead of the URL
+export const createDoctorScheduleFlat = async (req: Request, res: Response) => {
+    try {
+        const { doctorProfileId, clinicId, dayOfWeek, startTime, endTime, slotDurationMinutes, isActive } = req.body;
+
+        const parsedDoctorProfileId = parseId(doctorProfileId);
+        const parsedClinicId = parseId(clinicId);
+        const parsedDayOfWeek = dayOfWeekToInt(dayOfWeek);
+
+        if (
+            parsedDoctorProfileId === null ||
+            parsedClinicId === null ||
+            parsedDayOfWeek === null ||
+            !startTime ||
+            !endTime ||
+            !slotDurationMinutes
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message:
+                        "doctorProfileId, clinicId, dayOfWeek, startTime, endTime and slotDurationMinutes are required",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!canManageDoctor(currentUser, parsedDoctorProfileId)) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this doctor's schedule",
+                },
+            });
+        }
+
+        const schedule = await prisma.doctorSchedule.create({
+            data: {
+                doctorProfileId: parsedDoctorProfileId,
+                clinicId: parsedClinicId,
+                dayOfWeek: parsedDayOfWeek,
+                startTime: parseTime(startTime),
+                endTime: parseTime(endTime),
+                slotDurationMinutes,
+                isActive: isActive ?? true,
+            },
+        });
+
+        return res.status(201).json({
+            id: schedule.id.toString(),
+            doctorProfileId: schedule.doctorProfileId.toString(),
+            clinicId: schedule.clinicId.toString(),
+            dayOfWeek: DAYS_OF_WEEK[schedule.dayOfWeek],
+            startTime: formatTime(schedule.startTime),
+            endTime: formatTime(schedule.endTime),
+            slotDurationMinutes: schedule.slotDurationMinutes,
+            isActive: schedule.isActive,
+        });
+    } catch (error) {
+        console.error("Create doctor schedule (flat) failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to create doctor schedule",
+            },
+        });
+    }
+};
+
+// Flat alias for updateDoctorSchedule: scheduleId comes from the URL, doctorProfileId ownership is read from the existing row
+export const updateDoctorScheduleFlat = async (req: Request, res: Response) => {
+    try {
+        const scheduleId = parseId(req.params.id);
+
+        if (scheduleId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "id must be a valid numeric identifier",
+                },
+            });
+        }
+
+        const existingSchedule = await prisma.doctorSchedule.findUnique({
+            where: { id: scheduleId },
+        });
+
+        if (!existingSchedule) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Schedule not found",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!canManageDoctor(currentUser, existingSchedule.doctorProfileId)) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this doctor's schedule",
+                },
+            });
+        }
+
+        const { clinicId, dayOfWeek, startTime, endTime, slotDurationMinutes, isActive } = req.body;
+
+        const parsedClinicId = parseId(clinicId);
+        const parsedDayOfWeek = dayOfWeekToInt(dayOfWeek);
+
+        if (parsedClinicId === null || parsedDayOfWeek === null || !startTime || !endTime || !slotDurationMinutes) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "clinicId, dayOfWeek, startTime, endTime and slotDurationMinutes are required",
+                },
+            });
+        }
+
+        const schedule = await prisma.doctorSchedule.update({
+            where: { id: scheduleId },
+            data: {
+                clinicId: parsedClinicId,
+                dayOfWeek: parsedDayOfWeek,
+                startTime: parseTime(startTime),
+                endTime: parseTime(endTime),
+                slotDurationMinutes,
+                isActive: isActive ?? true,
+            },
+        });
+
+        return res.status(200).json({
+            id: schedule.id.toString(),
+            doctorProfileId: schedule.doctorProfileId.toString(),
+            clinicId: schedule.clinicId.toString(),
+            dayOfWeek: DAYS_OF_WEEK[schedule.dayOfWeek],
+            startTime: formatTime(schedule.startTime),
+            endTime: formatTime(schedule.endTime),
+            slotDurationMinutes: schedule.slotDurationMinutes,
+            isActive: schedule.isActive,
+        });
+    } catch (error) {
+        console.error("Update doctor schedule (flat) failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to update doctor schedule",
+            },
+        });
+    }
+};
+
 

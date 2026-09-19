@@ -26,9 +26,37 @@ const serializeNotification = (notification: any) => ({
 export const getMyNotifications = async (req: Request, res: Response) => {
     try {
         const currentUser = res.locals.user;
-        const { isRead } = req.query;
+        const { isRead, userId } = req.query;
 
         const where: any = { userId: currentUser.id };
+
+        // ADMIN can view another user's notifications via ?userId=; everyone else is scoped to themselves
+        if (userId) {
+            const roleNames: string[] =
+                currentUser?.userRoles?.map((userRole: any) => userRole.role.name) ?? [];
+
+            if (!roleNames.includes("ADMIN")) {
+                return res.status(403).json({
+                    error: {
+                        code: "FORBIDDEN",
+                        message: "Only ADMIN can view another user's notifications",
+                    },
+                });
+            }
+
+            const parsedUserId = parseId(userId as string | string[] | undefined);
+
+            if (parsedUserId === null) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "userId must be a valid numeric identifier",
+                    },
+                });
+            }
+
+            where.userId = parsedUserId;
+        }
 
         if (isRead !== undefined) {
             where.isRead = isRead === "true";
@@ -49,6 +77,54 @@ export const getMyNotifications = async (req: Request, res: Response) => {
             error: {
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to retrieve notifications",
+            },
+        });
+    }
+};
+
+export const createNotification = async (req: Request, res: Response) => {
+    try {
+        const { userId, type, title, message } = req.body;
+
+        const parsedUserId = parseId(userId);
+
+        if (parsedUserId === null || !type || !title || !message) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "userId, type, title and message are required",
+                },
+            });
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: parsedUserId } });
+
+        if (!user) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "User not found",
+                },
+            });
+        }
+
+        const notification = await prisma.notification.create({
+            data: {
+                userId: parsedUserId,
+                type,
+                title,
+                message,
+            },
+        });
+
+        return res.status(201).json(serializeNotification(notification));
+    } catch (error) {
+        console.error("Create notification failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to create notification",
             },
         });
     }
@@ -82,13 +158,14 @@ export const markNotificationRead = async (req: Request, res: Response) => {
             });
         }
 
-        const { isRead } = req.body;
+        // Body is optional: PATCH /:id/read means "mark as read" unless isRead: false is sent explicitly
+        const isRead = req.body?.isRead ?? true;
 
         if (typeof isRead !== "boolean") {
             return res.status(400).json({
                 error: {
                     code: "INVALID_REQUEST",
-                    message: "isRead is required and must be a boolean",
+                    message: "isRead must be a boolean when provided",
                 },
             });
         }
