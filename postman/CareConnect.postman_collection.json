@@ -1,0 +1,1249 @@
+{
+  "info": {
+    "name": "CareConnect API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "careconnect-api-collection-0002"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "devUserSub", "value": "auth0|dev-local-user" },
+    { "key": "devUserEmail", "value": "dev-local-user@example.com" },
+    { "key": "authToken", "value": "" },
+    { "key": "m2mToken", "value": "" },
+    { "key": "clinicId", "value": "1" },
+    { "key": "serviceId", "value": "1" },
+    { "key": "userId", "value": "1" },
+    { "key": "doctorId", "value": "1" },
+    { "key": "specialtyId", "value": "1" },
+    { "key": "scheduleId", "value": "1" },
+    { "key": "appointmentId", "value": "1" },
+    { "key": "roleId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users?status=ACTIVE&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"],
+              "query": [
+                { "key": "status", "value": "ACTIVE" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Create My Profile (self-registration)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"phone\": \"+15555550111\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe-Smith\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"phone\": \"+15555550112\",\n  \"profilePhoto\": null,\n  \"nic\": \"901234567V\",\n  \"nicPhoto\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get User By Id (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User By Id (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe-Smith\",\n  \"phone\": \"+15555550112\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clinics",
+      "item": [
+        {
+          "name": "List Clinics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics"]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Clinic (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Clinic\",\n  \"description\": \"General practice clinic\",\n  \"addressLine1\": \"123 Main St\",\n  \"addressLine2\": \"Suite 200\",\n  \"city\": \"San Francisco\",\n  \"district\": \"District 1\",\n  \"province\": \"Western\",\n  \"postalCode\": \"94103\",\n  \"country\": \"Sri Lanka\",\n  \"telephone\": \"+15555550100\",\n  \"email\": \"contact@testclinic.com\",\n  \"latitude\": \"37.7749\",\n  \"longitude\": \"-122.4194\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics"]
+            }
+          }
+        },
+        {
+          "name": "Update Clinic (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Clinic Updated\",\n  \"description\": \"Updated description\",\n  \"addressLine1\": \"123 Main St\",\n  \"city\": \"San Francisco\",\n  \"telephone\": \"+15555550100\",\n  \"email\": \"contact@testclinic.com\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Clinic (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic Operating Hours",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/operating-hours",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "operating-hours"]
+            }
+          }
+        },
+        {
+          "name": "Update Clinic Operating Hours (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hours\": [\n    { \"dayOfWeek\": \"MONDAY\", \"openingTime\": \"08:00:00\", \"closingTime\": \"17:00:00\", \"isClosed\": false },\n    { \"dayOfWeek\": \"SUNDAY\", \"openingTime\": null, \"closingTime\": null, \"isClosed\": true }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/operating-hours",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "operating-hours"]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic Doctors",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/doctors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "doctors"]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic Services",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "services"]
+            }
+          }
+        },
+        {
+          "name": "Add Service To Clinic (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "services"]
+            }
+          }
+        },
+        {
+          "name": "Remove Service From Clinic (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "services", "{{serviceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic Users (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Add User To Clinic (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Remove User From Clinic (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "List Doctors",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors"]
+            }
+          }
+        },
+        {
+          "name": "Get Doctor By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Doctor (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"licenseNumber\": \"SLMC-12345\",\n  \"bio\": \"Experienced cardiologist with 10+ years of practice.\",\n  \"yearsOfExperience\": 10,\n  \"isVerified\": false,\n  \"specialtyIds\": [\"{{specialtyId}}\"],\n  \"clinicIds\": [\"{{clinicId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors"]
+            }
+          }
+        },
+        {
+          "name": "Update Doctor (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Updated bio\",\n  \"yearsOfExperience\": 12,\n  \"isVerified\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Doctor Schedules",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "schedules"]
+            }
+          }
+        },
+        {
+          "name": "Create Doctor Schedule (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"dayOfWeek\": \"TUESDAY\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"13:00:00\",\n  \"slotDurationMinutes\": 20,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "schedules"]
+            }
+          }
+        },
+        {
+          "name": "Update Doctor Schedule (ADMIN or the doctor)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"dayOfWeek\": \"TUESDAY\",\n  \"startTime\": \"10:00:00\",\n  \"endTime\": \"14:00:00\",\n  \"slotDurationMinutes\": 30,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "schedules", "{{scheduleId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Doctor Available Slots",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/available-slots?clinicId={{clinicId}}&date=2026-09-22&serviceId={{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "available-slots"],
+              "query": [
+                { "key": "clinicId", "value": "{{clinicId}}" },
+                { "key": "date", "value": "2026-09-22" },
+                { "key": "serviceId", "value": "{{serviceId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Specialty To Doctor (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"specialtyId\": \"{{specialtyId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/specialties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "specialties"]
+            }
+          }
+        },
+        {
+          "name": "Remove Specialty From Doctor (ADMIN or the doctor)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/specialties/{{specialtyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "specialties", "{{specialtyId}}"]
+            }
+          }
+        },
+        {
+          "name": "Add Doctor To Clinic (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/clinics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "clinics"]
+            }
+          }
+        },
+        {
+          "name": "Remove Doctor From Clinic (ADMIN or the doctor)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/clinics/{{clinicId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "clinics", "{{clinicId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Specialties",
+      "item": [
+        {
+          "name": "List Specialties",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/specialties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "specialties"]
+            }
+          }
+        },
+        {
+          "name": "Create Specialty (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cardiology\",\n  \"description\": \"Heart and cardiovascular system specialists\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/specialties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "specialties"]
+            }
+          }
+        },
+        {
+          "name": "Update Specialty (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cardiology\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/specialties/{{specialtyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "specialties", "{{specialtyId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "List Services",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services?clinicId={{clinicId}}&doctorId={{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services"],
+              "query": [
+                { "key": "clinicId", "value": "{{clinicId}}" },
+                { "key": "doctorId", "value": "{{doctorId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Service By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services", "{{serviceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Service (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"General Consultation\",\n  \"description\": \"Standard consultation with a general practitioner\",\n  \"durationMinutes\": 30,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services"]
+            }
+          }
+        },
+        {
+          "name": "Update Service (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"General Consultation Updated\",\n  \"description\": \"Updated description\",\n  \"durationMinutes\": 45,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services", "{{serviceId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "List All Appointments (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments?status=PENDING&doctorId={{doctorId}}&clinicId={{clinicId}}&patientId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments"],
+              "query": [
+                { "key": "status", "value": "PENDING" },
+                { "key": "doctorId", "value": "{{doctorId}}" },
+                { "key": "clinicId", "value": "{{clinicId}}" },
+                { "key": "patientId", "value": "{{userId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/me?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "me"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorProfileId\": \"{{doctorId}}\",\n  \"clinicId\": \"{{clinicId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"doctorScheduleId\": \"{{scheduleId}}\",\n  \"appointmentDate\": \"2026-09-22\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"09:30:00\",\n  \"reason\": \"Routine checkup\",\n  \"notes\": \"Patient requested morning slot\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments"]
+            }
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\",\n  \"reason\": \"Confirmed by clinic staff\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment Status History",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/status-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}", "status-history"]
+            }
+          }
+        },
+        {
+          "name": "Get Check-In",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}", "check-in"]
+            }
+          }
+        },
+        {
+          "name": "Create Check-In",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"QR_CODE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}", "check-in"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Create Notification (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"type\": \"APPOINTMENT_REMINDER\",\n  \"title\": \"Appointment reminder\",\n  \"message\": \"You have an appointment tomorrow at 09:00.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification As Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/1/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notifications", "1", "read"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "List Roles (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "roles"]
+            }
+          }
+        },
+        {
+          "name": "Create Role (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AUDITOR\",\n  \"description\": \"Read-only auditor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "roles"]
+            }
+          }
+        },
+        {
+          "name": "Assign Role To User (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-roles"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        {
+          "name": "List Audit Logs (ADMIN)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit-logs?userId={{userId}}&entityType=Appointment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "audit-logs"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" },
+                { "key": "entityType", "value": "Appointment" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flat Link Routes",
+      "item": [
+        {
+          "name": "Add Service To Clinic - flat (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"serviceId\": \"{{serviceId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinic-services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinic-services"]
+            }
+          }
+        },
+        {
+          "name": "Add Doctor To Clinic - flat (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorProfileId\": \"{{doctorId}}\",\n  \"clinicId\": \"{{clinicId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-clinics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctor-clinics"]
+            }
+          }
+        },
+        {
+          "name": "Add Specialty To Doctor - flat (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorProfileId\": \"{{doctorId}}\",\n  \"specialtyId\": \"{{specialtyId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-specialties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctor-specialties"]
+            }
+          }
+        },
+        {
+          "name": "Add Service To Doctor - flat (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorProfileId\": \"{{doctorId}}\",\n  \"serviceId\": \"{{serviceId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctor-services"]
+            }
+          }
+        },
+        {
+          "name": "List Doctor Schedules - flat",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules?doctorId={{doctorId}}&clinicId={{clinicId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctor-schedules"],
+              "query": [
+                { "key": "doctorId", "value": "{{doctorId}}" },
+                { "key": "clinicId", "value": "{{clinicId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Doctor Schedule - flat (ADMIN or the doctor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorProfileId\": \"{{doctorId}}\",\n  \"clinicId\": \"{{clinicId}}\",\n  \"dayOfWeek\": \"WEDNESDAY\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"13:00:00\",\n  \"slotDurationMinutes\": 20,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctor-schedules"]
+            }
+          }
+        },
+        {
+          "name": "Update Doctor Schedule - flat (ADMIN or the doctor)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"dayOfWeek\": \"WEDNESDAY\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"13:00:00\",\n  \"slotDurationMinutes\": 20,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctor-schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctor-schedules", "{{scheduleId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Protected - Current User Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/protected",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "protected"]
+            }
+          },
+          "description": "Returns the authenticated CareConnect user and roles. Requires a human token (or the dev headers when AUTH_ENABLED=false)."
+        },
+        {
+          "name": "M2M Ping (scope read:system)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{m2mToken}}" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/m2m/ping",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "m2m", "ping"]
+            }
+          },
+          "description": "M2M demo endpoint, authorized by scope rather than user role. Needs a client-credentials token with read:system; with AUTH_ENABLED=false the scope comes from DEV_USER_SCOPE."
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "App Health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Database Health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/db",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "db"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
