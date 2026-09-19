@@ -23,6 +23,8 @@ router.get("/me", checkJwt, loadCurrentUser, getMyAppointments);
 router.get("/:id", checkJwt, loadCurrentUser, getAppointmentById);
 router.post("/", checkJwt, loadCurrentUser, createAppointment);
 router.patch("/:id", checkJwt, loadCurrentUser, updateAppointmentStatus);
+// Alias matching the frontend-shared collection's dedicated status-update path
+router.patch("/:id/status", checkJwt, loadCurrentUser, updateAppointmentStatus);
 router.delete("/:id", checkJwt, loadCurrentUser, cancelAppointment);
 router.get("/:id/status-history", checkJwt, loadCurrentUser, getAppointmentStatusHistory);
 // Access is scoped inside the controller (owner, assigned doctor, or clinic staff/admin)

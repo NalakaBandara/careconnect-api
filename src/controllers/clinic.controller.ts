@@ -42,7 +42,20 @@ const serializeClinic = (clinic: any) => ({
 
 export const getClinics = async (req: Request, res: Response) => {
     try {
+        const { city, status } = req.query;
+
+        const where: any = {};
+
+        if (typeof city === "string") {
+            where.city = { equals: city, mode: "insensitive" };
+        }
+
+        if (typeof status === "string") {
+            where.status = status;
+        }
+
         const clinics = await prisma.clinic.findMany({
+            where,
             orderBy: {
                 id: "asc",
             },
@@ -342,6 +355,104 @@ export const getClinicOperatingHours = async (req: Request, res: Response) => {
             error: {
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to retrieve operating hours",
+            },
+        });
+    }
+};
+
+export const createClinicOperatingHour = async (req: Request, res: Response) => {
+    try {
+        let clinicId: bigint;
+
+        try {
+            clinicId = BigInt(req.params.id as string);
+        } catch {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "id must be a valid numeric identifier",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!(await canManageClinic(currentUser, clinicId))) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this clinic",
+                },
+            });
+        }
+
+        const { dayOfWeek: dayOfWeekInput, openingTime, closingTime, isClosed } = req.body;
+
+        const dayOfWeek = dayOfWeekToInt(dayOfWeekInput);
+
+        if (dayOfWeek === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: `Invalid dayOfWeek: ${dayOfWeekInput}`,
+                },
+            });
+        }
+
+        if (!isClosed && (!openingTime || !closingTime)) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "openingTime and closingTime are required when isClosed is false",
+                },
+            });
+        }
+
+        const hour = await prisma.clinicOperatingHour.create({
+            data: {
+                clinicId,
+                dayOfWeek,
+                openingTime: isClosed ? null : parseTime(openingTime),
+                closingTime: isClosed ? null : parseTime(closingTime),
+                isClosed: !!isClosed,
+            },
+        });
+
+        return res.status(201).json({
+            data: {
+                id: hour.id.toString(),
+                dayOfWeek: DAYS_OF_WEEK[hour.dayOfWeek],
+                openingTime: formatTime(hour.openingTime),
+                closingTime: formatTime(hour.closingTime),
+                isClosed: hour.isClosed,
+            },
+        });
+    } catch (error: any) {
+        // Unique constraint on (clinicId, dayOfWeek) means that day already has hours
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "Operating hours for this day already exist; use PUT to update",
+                },
+            });
+        }
+
+        if (error?.code === "P2003") {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Clinic not found",
+                },
+            });
+        }
+
+        console.error("Create clinic operating hour failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to create operating hour",
             },
         });
     }

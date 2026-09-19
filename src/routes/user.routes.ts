@@ -7,6 +7,7 @@ import {
     getUsers,
     getMyProfile,
     createMyProfile,
+    createUser,
     updateMyProfile,
     getUserById,
     updateUserById,
@@ -15,6 +16,7 @@ import {
 const router = Router();
 
 router.get("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), getUsers);
+router.post("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), createUser);
 router.get("/me", checkJwt, loadCurrentUser, getMyProfile);
 router.post("/me", checkJwt, rejectM2MTokens, createMyProfile);
 router.put("/me", checkJwt, loadCurrentUser, updateMyProfile);

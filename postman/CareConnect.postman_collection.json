@@ -239,6 +239,26 @@
           }
         },
         {
+          "name": "Create Clinic Operating Hour (ADMIN or CLINIC_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayOfWeek\": \"MONDAY\",\n  \"openingTime\": \"08:00:00\",\n  \"closingTime\": \"17:00:00\",\n  \"isClosed\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/operating-hours",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clinics", "{{clinicId}}", "operating-hours"]
+            }
+          }
+        },
+        {
           "name": "Update Clinic Operating Hours (ADMIN or CLINIC_ADMIN)",
           "request": {
             "method": "PUT",

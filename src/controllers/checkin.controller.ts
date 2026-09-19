@@ -88,18 +88,38 @@ export const getCheckIn = async (req: Request, res: Response) => {
 };
 
 export const createCheckIn = async (req: Request, res: Response) => {
+    const appointmentId = parseId(req.params.appointmentId);
+
+    if (appointmentId === null) {
+        return res.status(400).json({
+            error: {
+                code: "INVALID_REQUEST",
+                message: "appointmentId must be a valid numeric identifier",
+            },
+        });
+    }
+
+    return performCheckIn(appointmentId, req, res);
+};
+
+// Flat alias for createCheckIn: appointmentId comes from the request body instead of the URL
+export const createCheckInFlat = async (req: Request, res: Response) => {
+    const appointmentId = parseId(req.body.appointmentId);
+
+    if (appointmentId === null) {
+        return res.status(400).json({
+            error: {
+                code: "INVALID_REQUEST",
+                message: "appointmentId is required and must be a valid numeric identifier",
+            },
+        });
+    }
+
+    return performCheckIn(appointmentId, req, res);
+};
+
+const performCheckIn = async (appointmentId: bigint, req: Request, res: Response) => {
     try {
-        const appointmentId = parseId(req.params.appointmentId);
-
-        if (appointmentId === null) {
-            return res.status(400).json({
-                error: {
-                    code: "INVALID_REQUEST",
-                    message: "appointmentId must be a valid numeric identifier",
-                },
-            });
-        }
-
         const appointment = await prisma.appointment.findUnique({
             where: { id: appointmentId },
         });
@@ -175,3 +195,4 @@ export const createCheckIn = async (req: Request, res: Response) => {
         });
     }
 };
+
