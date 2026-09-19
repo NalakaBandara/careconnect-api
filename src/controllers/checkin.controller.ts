@@ -2,9 +2,13 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { canAccessAppointment } from "./appointment.controller.js";
 
-const parseId = (value: string | undefined): bigint | null => {
+const parseId = (value: string | string[] | undefined): bigint | null => {
+    if (typeof value !== "string") {
+        return null;
+    }
+
     try {
-        return BigInt(value as string);
+        return BigInt(value);
     } catch {
         return null;
     }
