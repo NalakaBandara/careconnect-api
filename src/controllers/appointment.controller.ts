@@ -263,10 +263,18 @@ export const createAppointment = async (req: Request, res: Response) => {
         ]);
 
         if (!doctorProfile || !clinic || !service || !doctorSchedule || !patient) {
+            const missing = [
+                !doctorProfile && "doctorProfileId",
+                !clinic && "clinicId",
+                !service && "serviceId",
+                !doctorSchedule && "doctorScheduleId",
+                !patient && "patientId",
+            ].filter(Boolean);
+
             return res.status(404).json({
                 error: {
                     code: "NOT_FOUND",
-                    message: "Doctor, clinic, service, schedule or patient not found",
+                    message: `No record found for: ${missing.join(", ")}`,
                 },
             });
         }
