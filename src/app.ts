@@ -2,9 +2,8 @@ import express from 'express';
 import { prisma } from './config/prisma.js';
 import { checkJwt } from './middleware/auth0.middleware.js';
 import { loadCurrentUser } from './middleware/current-user.middleware.js';
-import { requireScopes } from './middleware/scope.middleware.js';
-import { SCOPES } from './config/scopes.js';
 import userRoutes from "./routes/user.routes.js";
+import authRoutes from "./routes/auth.routes.js";
 import clinicRoutes from "./routes/clinic.routes.js";
 import doctorRoutes from "./routes/doctor.routes.js";
 import specialtyRoutes from "./routes/specialty.routes.js";
@@ -69,7 +68,6 @@ app.get(
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                auth0UserId: user.auth0UserId,
                 roles: user.userRoles.map(
                     (userRole: any) => userRole.role.name
                 )
@@ -77,6 +75,9 @@ app.get(
         });
     }
 );
+
+// Auth routes (register/login - public)
+app.use("/api/v1/auth", authRoutes);
 
 // User routes
 app.use("/api/v1/users", userRoutes);
@@ -113,20 +114,5 @@ app.use("/api/v1/doctor-schedules", doctorScheduleRoutes);
 app.use("/api/v1/doctor-services", doctorServiceRoutes);
 app.use("/api/v1/doctor-specialties", doctorSpecialtyRoutes);
 app.use("/api/v1/check-ins", checkinRoutes);
-
-// M2M (client_credentials) demo endpoint - authorized via scope, not user roles
-app.get(
-    '/api/m2m/ping',
-    checkJwt,
-    requireScopes(SCOPES.READ_SYSTEM),
-    (req, res) => {
-        res.status(200).json({
-            message: 'M2M token authorized',
-            clientId: req.auth?.payload?.sub,
-            scopes: (req.auth?.payload?.scope as string | undefined)?.split(' ') ?? []
-        });
-    }
-);
-
 
 export default app;

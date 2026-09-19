@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
-import { isM2MToken } from './scope.middleware.js';
 
 export const loadCurrentUser = async (
     req: Request,
@@ -8,9 +7,9 @@ export const loadCurrentUser = async (
     next: NextFunction
 ) => {
     try {
-        const auth0UserId = req.auth?.payload?.sub;
+        const sub = req.auth?.payload?.sub;
 
-        if (!auth0UserId) {
+        if (!sub) {
             return res.status(401).json({
                 error: {
                     code: 'UNAUTHORIZED',
@@ -19,18 +18,22 @@ export const loadCurrentUser = async (
             });
         }
 
-        if (isM2MToken(req)) {
-            return res.status(403).json({
+        let userId: bigint;
+
+        try {
+            userId = BigInt(sub);
+        } catch {
+            return res.status(401).json({
                 error: {
-                    code: 'FORBIDDEN',
-                    message: 'Machine-to-machine tokens cannot access user endpoints'
+                    code: 'UNAUTHORIZED',
+                    message: 'Invalid user identity in access token'
                 }
             });
         }
 
         const user = await prisma.user.findUnique({
             where: {
-                auth0UserId
+                id: userId
             },
             include: {
                 userRoles: {

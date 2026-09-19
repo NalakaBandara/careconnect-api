@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcrypt";
 
 const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
@@ -57,19 +58,21 @@ async function main() {
     // 2. Create Test Patient
     // ============================================================
 
+    // Dev-only default password for seed data - never used in production accounts
+    const passwordHash = await bcrypt.hash("Password123!", 10);
+
     const patient = await prisma.user.upsert({
         where: {
-            auth0UserId: "auth0|6a96b401f89098774ecdb0d7",
+            email: "john@gmail.com",
         },
         update: {
-            email: "john@gmail.com",
             firstName: "John",
             lastName: "Smith",
             status: "ACTIVE",
         },
         create: {
             email: "john@gmail.com",
-            auth0UserId: "auth0|6a96b401f89098774ecdb0d7",
+            passwordHash,
             firstName: "John",
             lastName: "Smith",
             status: "ACTIVE",
