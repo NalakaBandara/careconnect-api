@@ -263,6 +263,45 @@ export const updateClinic = async (req: Request, res: Response) => {
     }
 };
 
+export const deleteClinic = async (req: Request, res: Response) => {
+    try {
+        let clinicId: bigint;
+
+        try {
+            clinicId = BigInt(req.params.id as string);
+        } catch {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "id must be a valid numeric identifier",
+                },
+            });
+        }
+
+        await prisma.clinic.delete({ where: { id: clinicId } });
+
+        return res.status(204).send();
+    } catch (error: any) {
+        if (error?.code === "P2025") {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Clinic not found",
+                },
+            });
+        }
+
+        console.error("Delete clinic failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to delete clinic",
+            },
+        });
+    }
+};
+
 export const getClinicOperatingHours = async (req: Request, res: Response) => {
     try {
         let clinicId: bigint;
@@ -662,6 +701,83 @@ export const removeClinicService = async (req: Request, res: Response) => {
             error: {
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to remove service from clinic",
+            },
+        });
+    }
+};
+
+// Flat alias for addClinicService: clinicId comes from the request body instead of the URL
+export const createClinicService = async (req: Request, res: Response) => {
+    try {
+        const { clinicId, serviceId } = req.body;
+
+        let parsedClinicId: bigint;
+        let parsedServiceId: bigint;
+
+        try {
+            parsedClinicId = BigInt(clinicId);
+            parsedServiceId = BigInt(serviceId);
+        } catch {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "clinicId and serviceId are required and must be valid numeric identifiers",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!(await canManageClinic(currentUser, parsedClinicId))) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to manage this clinic",
+                },
+            });
+        }
+
+        const [clinic, service] = await Promise.all([
+            prisma.clinic.findUnique({ where: { id: parsedClinicId } }),
+            prisma.service.findUnique({ where: { id: parsedServiceId } }),
+        ]);
+
+        if (!clinic || !service) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Clinic or service not found",
+                },
+            });
+        }
+
+        await prisma.clinicService.create({
+            data: {
+                clinicId: parsedClinicId,
+                serviceId: parsedServiceId,
+            },
+        });
+
+        return res.status(201).json({
+            clinicId: parsedClinicId.toString(),
+            serviceId: parsedServiceId.toString(),
+        });
+    } catch (error: any) {
+        if (error?.code === "P2002") {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "This service is already linked to this clinic",
+                },
+            });
+        }
+
+        console.error("Create clinic service failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to add service to clinic",
             },
         });
     }

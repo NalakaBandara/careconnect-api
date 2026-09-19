@@ -11,6 +11,14 @@ import specialtyRoutes from "./routes/specialty.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import appointmentRoutes from "./routes/appointment.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import roleRoutes from "./routes/role.routes.js";
+import userRoleRoutes from "./routes/userRole.routes.js";
+import auditLogRoutes from "./routes/auditLog.routes.js";
+import clinicServiceRoutes from "./routes/clinicService.routes.js";
+import doctorClinicRoutes from "./routes/doctorClinic.routes.js";
+import doctorScheduleRoutes from "./routes/doctorSchedule.routes.js";
+import doctorServiceRoutes from "./routes/doctorService.routes.js";
+import doctorSpecialtyRoutes from "./routes/doctorSpecialty.routes.js";
 
 const app = express();
 
@@ -89,6 +97,20 @@ app.use("/api/v1/notifications", notificationRoutes);
 
 // Appointment routes
 app.use("/api/v1/appointments", appointmentRoutes);
+
+// Role management and role assignment (ADMIN only)
+app.use("/api/v1/roles", roleRoutes);
+app.use("/api/v1/user-roles", userRoleRoutes);
+
+// Audit log routes (ADMIN only)
+app.use("/api/v1/audit-logs", auditLogRoutes);
+
+// Flat link-table routes; body carries both ids, permissions are checked in the controllers
+app.use("/api/v1/clinic-services", clinicServiceRoutes);
+app.use("/api/v1/doctor-clinics", doctorClinicRoutes);
+app.use("/api/v1/doctor-schedules", doctorScheduleRoutes);
+app.use("/api/v1/doctor-services", doctorServiceRoutes);
+app.use("/api/v1/doctor-specialties", doctorSpecialtyRoutes);
 
 // M2M (client_credentials) demo endpoint - authorized via scope, not user roles
 app.get(

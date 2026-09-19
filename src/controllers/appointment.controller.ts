@@ -441,3 +441,145 @@ export const getAppointmentStatusHistory = async (req: Request, res: Response) =
         });
     }
 };
+
+// ADMIN-only cross-user listing with optional filters, distinct from GET /me (which is scoped to the caller)
+export const getAppointments = async (req: Request, res: Response) => {
+    try {
+        const { patientId, doctorId, clinicId, status } = req.query;
+
+        const where: any = {};
+
+        if (patientId) {
+            const parsedPatientId = parseId(patientId as string | string[] | undefined);
+
+            if (parsedPatientId === null) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "patientId must be a valid numeric identifier",
+                    },
+                });
+            }
+
+            where.patientId = parsedPatientId;
+        }
+
+        if (doctorId) {
+            const parsedDoctorId = parseId(doctorId as string | string[] | undefined);
+
+            if (parsedDoctorId === null) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "doctorId must be a valid numeric identifier",
+                    },
+                });
+            }
+
+            where.doctorProfileId = parsedDoctorId;
+        }
+
+        if (clinicId) {
+            const parsedClinicId = parseId(clinicId as string | string[] | undefined);
+
+            if (parsedClinicId === null) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "clinicId must be a valid numeric identifier",
+                    },
+                });
+            }
+
+            where.clinicId = parsedClinicId;
+        }
+
+        if (typeof status === "string") {
+            where.status = status;
+        }
+
+        const appointments = await prisma.appointment.findMany({
+            where,
+            include: appointmentIncludes,
+            orderBy: { appointmentDate: "desc" },
+        });
+
+        return res.status(200).json({
+            data: appointments.map(serializeAppointment),
+        });
+    } catch (error) {
+        console.error("List appointments failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to retrieve appointments",
+            },
+        });
+    }
+};
+
+export const cancelAppointment = async (req: Request, res: Response) => {
+    try {
+        const appointmentId = parseId(req.params.id);
+
+        if (appointmentId === null) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "id must be a valid numeric identifier",
+                },
+            });
+        }
+
+        const existingAppointment = await prisma.appointment.findUnique({
+            where: { id: appointmentId },
+        });
+
+        if (!existingAppointment) {
+            return res.status(404).json({
+                error: {
+                    code: "NOT_FOUND",
+                    message: "Appointment not found",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!(await canAccessAppointment(currentUser, existingAppointment))) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to cancel this appointment",
+                },
+            });
+        }
+
+        const appointment = await prisma.appointment.update({
+            where: { id: appointmentId },
+            data: {
+                status: "CANCELLED",
+                statusHistory: {
+                    create: {
+                        status: "CANCELLED",
+                        reason: "Cancelled by user",
+                        changedByUserId: currentUser.id,
+                    },
+                },
+            },
+            include: appointmentIncludes,
+        });
+
+        return res.status(200).json(serializeAppointment(appointment));
+    } catch (error) {
+        console.error("Cancel appointment failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to cancel appointment",
+            },
+        });
+    }
+};
