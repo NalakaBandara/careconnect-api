@@ -4,6 +4,7 @@ import { loadCurrentUser } from "../middleware/current-user.middleware.js";
 import { rejectM2MTokens } from "../middleware/scope.middleware.js";
 import { requireRoles } from "../middleware/role.middleware.js";
 import {
+    getUsers,
     getMyProfile,
     createMyProfile,
     updateMyProfile,
@@ -12,6 +13,7 @@ import {
 
 const router = Router();
 
+router.get("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), getUsers);
 router.get("/me", checkJwt, loadCurrentUser, getMyProfile);
 router.post("/me", checkJwt, rejectM2MTokens, createMyProfile);
 router.put("/me", checkJwt, loadCurrentUser, updateMyProfile);

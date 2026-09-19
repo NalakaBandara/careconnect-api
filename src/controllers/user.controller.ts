@@ -63,6 +63,67 @@ export const getMyProfile = async (req: Request, res: Response) => {
     }
 };
 
+export const getUsers = async (req: Request, res: Response) => {
+    try {
+        const { status } = req.query;
+
+        const where: any = {};
+
+        if (typeof status === "string") {
+            where.status = status;
+        }
+
+        const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+        const pageSize = Math.min(
+            Math.max(parseInt(req.query.pageSize as string, 10) || 20, 1),
+            100
+        );
+
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                orderBy: { id: "asc" },
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+                include: {
+                    userRoles: {
+                        include: {
+                            role: true,
+                        },
+                    },
+                },
+            }),
+            prisma.user.count({ where }),
+        ]);
+
+        return res.status(200).json({
+            data: users.map((user) => ({
+                id: user.id.toString(),
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                status: user.status,
+                roles: user.userRoles.map((userRole) => userRole.role.name),
+            })),
+            pagination: {
+                page,
+                pageSize,
+                total,
+                totalPages: Math.ceil(total / pageSize),
+            },
+        });
+    } catch (error) {
+        console.error("List users failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to retrieve users",
+            },
+        });
+    }
+};
+
 export const createMyProfile = async (req: Request, res: Response) => {
     try {
         const auth0UserId = req.auth?.payload?.sub;
