@@ -1,0 +1,316 @@
+{
+  "info": {
+    "name": "CareConnect API - Local",
+    "_postman_id": "careconnect-api-local",
+    "description": "Postman collection for CareConnect API (local development). Replace {{baseUrl}} and tokens in environment before use.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        },
+        {
+          "name": "GET /health/db",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health/db", "host": ["{{baseUrl}}"], "path": ["health","db"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/v1/auth/register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const token = pm.response.json().accessToken;",
+                  "  if (token) { pm.environment.set('authToken', token); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.{{$timestamp}}@example.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"phone\": \"+15555550111\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] }
+          },
+          "description": "Public. Creates a PATIENT account and returns { data, accessToken }. Saves the token to {{authToken}}; email is timestamped so this can be re-run."
+        },
+        {
+          "name": "POST /api/v1/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const token = pm.response.json().accessToken;",
+                  "  if (token) { pm.environment.set('authToken', token); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          },
+          "description": "Public. Returns { data, accessToken } (valid 1 hour, no refresh token) and saves the token to {{authToken}}. Run this first, then any other request."
+        },
+        {
+          "name": "GET /api/protected",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/protected", "host": ["{{baseUrl}}"], "path": ["api","protected"] }
+          },
+          "description": "Authenticated user info; requires the Bearer token from Register/Login (or the dev headers when AUTH_ENABLED=false)."
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /api/v1/users/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/me", "host": ["{{baseUrl}}"], "path": ["api","v1","users","me"] }
+          }
+        },
+        {
+          "name": "POST /api/v1/users/me (create profile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"phone\": \"+1234567890\",\n  \"address\": \"100 Dev Lane\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"gender\": \"other\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/users/me", "host": ["{{baseUrl}}"], "path": ["api","v1","users","me"] }
+          },
+          "description": "Create profile for authenticated human user. If `AUTH_ENABLED=false`, uses `x-dev-user-sub` to map to DB insertion."
+        },
+        {
+          "name": "PUT /api/v1/users/me (update)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Updated\",\n  \"phone\": \"+1987654321\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/users/me", "host": ["{{baseUrl}}"], "path": ["api","v1","users","me"] }
+          }
+        },
+        {
+          "name": "GET /api/v1/users/:id (admin)",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","users","{{userId}}"], "variable": [ { "key": "userId", "value": "" } ] }
+          },
+          "description": "Requires `ADMIN` role assigned in DB or test user."
+        }
+      ]
+    },
+    {
+      "name": "Clinics",
+      "item": [
+        {
+          "name": "GET /api/v1/clinics",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics"] } }
+        },
+        {
+          "name": "GET /api/v1/clinics/:id",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/clinics (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Clinic\",\n  \"address\": \"123 Main St\",\n  \"phone\": \"+15555550100\",\n  \"latitude\": 37.7749,\n  \"longitude\": -122.4194,\n  \"timeZone\": \"America/Los_Angeles\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/clinics", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics"] }
+          }
+        },
+        {
+          "name": "PUT /api/v1/clinics/:id (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Clinic\"\n}" }, "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "GET /api/v1/clinics/:id/operating-hours",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/operating-hours", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","operating-hours"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/clinics/:id/operating-hours (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"dayOfWeek\": \"MONDAY\", \"openingTime\": \"08:00:00\", \"closingTime\": \"17:00:00\", \"isClosed\": false }" }, "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/operating-hours", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","operating-hours"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "PUT /api/v1/clinics/:id/operating-hours (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"hours\": [ { \"dayOfWeek\": \"MONDAY\", \"openingTime\": \"09:00:00\", \"closingTime\": \"17:00:00\", \"isClosed\": false }, { \"dayOfWeek\": \"TUESDAY\", \"openingTime\": \"09:00:00\", \"closingTime\": \"17:00:00\", \"isClosed\": false } ] }" }, "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/operating-hours", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","operating-hours"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "GET /api/v1/clinics/:id/doctors",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/doctors", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","doctors"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "GET /api/v1/clinics/:id/services",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/services", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","services"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/clinics/:id/services (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"serviceId\": \"{{serviceId}}\", \"priceCents\": 5000 }" }, "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/services", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","services"], "variable": [ { "key": "clinicId", "value": "" }, { "key": "serviceId", "value": "" } ] } }
+        },
+        {
+          "name": "DELETE /api/v1/clinics/:id/services/:serviceId (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "DELETE", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/services/{{serviceId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","services","{{serviceId}}"], "variable": [ { "key": "clinicId", "value": "" }, { "key": "serviceId", "value": "" } ] } }
+        },
+        {
+          "name": "GET /api/v1/clinics/:id/users (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/users", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","users"], "variable": [ { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/clinics/:id/users (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"userId\": \"{{userId}}\", \"role\": \"CLINIC_ADMIN\", \"startDate\": \"2026-09-01\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/users", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","users"], "variable": [ { "key": "clinicId", "value": "" }, { "key": "userId", "value": "" } ] } }
+        },
+        {
+          "name": "DELETE /api/v1/clinics/:id/users/:userId (ADMIN/CLINIC_ADMIN)",
+          "request": { "method": "DELETE", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/clinics/{{clinicId}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","clinics","{{clinicId}}","users","{{userId}}"], "variable": [ { "key": "clinicId", "value": "" }, { "key": "userId", "value": "" } ] } }
+        }
+      ]
+    },
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "GET /api/v1/doctors",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/doctors", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors"] } }
+        },
+        {
+          "name": "GET /api/v1/doctors/:id",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}"], "variable": [ { "key": "doctorId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/doctors (ADMIN)",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"firstName\": \"Alice\", \"lastName\": \"Doctor\", \"bio\": \"Cardiologist with 10 years experience.\", \"phone\": \"+15551234567\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/doctors", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors"] } }
+        },
+        {
+          "name": "PUT /api/v1/doctors/:id (ADMIN)",
+          "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"bio\": \"Updated bio\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}"], "variable": [ { "key": "doctorId", "value": "" } ] } }
+        },
+        {
+          "name": "GET /api/v1/doctors/:id/schedules",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/schedules", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","schedules"], "variable": [ { "key": "doctorId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/doctors/:id/schedules (ADMIN or doctor)",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"dayOfWeek\": 1, \"start\": \"09:00:00\", \"end\": \"12:00:00\", \"location\": \"Room 101\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/schedules", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","schedules"], "variable": [ { "key": "doctorId", "value": "" } ] } }
+        },
+        {
+          "name": "PUT /api/v1/doctors/:id/schedules/:scheduleId",
+          "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"start\": \"10:00:00\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/schedules/{{scheduleId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","schedules","{{scheduleId}}"], "variable": [ { "key": "doctorId", "value": "" }, { "key": "scheduleId", "value": "" } ] } }
+        },
+        {
+          "name": "GET /api/v1/doctors/:id/available-slots",
+          "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/available-slots?date={{date}}", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","available-slots"], "query": [ { "key": "date", "value": "{{date}}" } ], "variable": [ { "key": "doctorId", "value": "" }, { "key": "date", "value": "2026-09-04" } ] } }
+        },
+        {
+          "name": "POST /api/v1/doctors/:doctorId/specialties",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"specialtyId\": \"{{specialtyId}}\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/specialties", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","specialties"], "variable": [ { "key": "doctorId", "value": "" }, { "key": "specialtyId", "value": "" } ] } }
+        },
+        {
+          "name": "DELETE /api/v1/doctors/:doctorId/specialties/:specialtyId",
+          "request": { "method": "DELETE", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/specialties/{{specialtyId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","specialties","{{specialtyId}}"], "variable": [ { "key": "doctorId", "value": "" }, { "key": "specialtyId", "value": "" } ] } }
+        },
+        {
+          "name": "POST /api/v1/doctors/:doctorId/clinics",
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"clinicId\": \"{{clinicId}}\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/clinics", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","clinics"], "variable": [ { "key": "doctorId", "value": "" }, { "key": "clinicId", "value": "" } ] } }
+        },
+        {
+          "name": "DELETE /api/v1/doctors/:doctorId/clinics/:clinicId",
+          "request": { "method": "DELETE", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/clinics/{{clinicId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","doctors","{{doctorId}}","clinics","{{clinicId}}"], "variable": [ { "key": "doctorId", "value": "" }, { "key": "clinicId", "value": "" } ] } }
+        }
+      ]
+    },
+    {
+      "name": "Specialties",
+      "item": [
+        { "name": "GET /api/v1/specialties", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/specialties", "host": ["{{baseUrl}}"], "path": ["api","v1","specialties"] } } },
+        { "name": "POST /api/v1/specialties (ADMIN)", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"name\": \"Cardiology\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/specialties", "host": ["{{baseUrl}}"], "path": ["api","v1","specialties"] } } },
+        { "name": "PUT /api/v1/specialties/:id (ADMIN)", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/specialties/{{specialtyId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","specialties","{{specialtyId}}"], "variable": [ { "key": "specialtyId", "value": "" } ] } } }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        { "name": "GET /api/v1/services", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/services", "host": ["{{baseUrl}}"], "path": ["api","v1","services"] } } },
+        { "name": "GET /api/v1/services/:id", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","services","{{serviceId}}"], "variable": [ { "key": "serviceId", "value": "" } ] } } },
+        { "name": "POST /api/v1/services (ADMIN)", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"name\": \"New Service\", \"description\": \"Initial consultation\", \"priceCents\": 5000, \"durationMinutes\": 30 }" }, "url": { "raw": "{{baseUrl}}/api/v1/services", "host": ["{{baseUrl}}"], "path": ["api","v1","services"] } } },
+        { "name": "PUT /api/v1/services/:id (ADMIN)", "request": { "method": "PUT", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"priceCents\": 4500 }" }, "url": { "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","services","{{serviceId}}"], "variable": [ { "key": "serviceId", "value": "" } ] } } }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        { "name": "GET /api/v1/appointments/me", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/appointments/me", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments","me"] } } },
+        { "name": "GET /api/v1/appointments/:id", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments","{{appointmentId}}"], "variable": [ { "key": "appointmentId", "value": "" } ] } } },
+        { "name": "POST /api/v1/appointments (create)", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"clinicId\": \"{{clinicId}}\", \"doctorId\": \"{{doctorId}}\", \"serviceId\": \"{{serviceId}}\", \"start\": \"2026-09-10T10:00:00.000Z\", \"patientNotes\": \"Prefers morning\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/appointments", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments"] } } },
+        { "name": "PATCH /api/v1/appointments/:id (status update)", "request": { "method": "PATCH", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"status\": \"CONFIRMED\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments","{{appointmentId}}"], "variable": [ { "key": "appointmentId", "value": "" } ] } } },
+        { "name": "GET /api/v1/appointments/:id/status-history", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/status-history", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments","{{appointmentId}}","status-history"], "variable": [ { "key": "appointmentId", "value": "" } ] } } },
+        { "name": "GET /api/v1/appointments/:appointmentId/check-in", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/check-in", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments","{{appointmentId}}","check-in"], "variable": [ { "key": "appointmentId", "value": "" } ] } } },
+        { "name": "POST /api/v1/appointments/:appointmentId/check-in", "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "body": { "mode": "raw", "raw": "{ \"notes\": \"Arrived\", \"status\": \"ARRIVED\" }" }, "url": { "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/check-in", "host": ["{{baseUrl}}"], "path": ["api","v1","appointments","{{appointmentId}}","check-in"], "variable": [ { "key": "appointmentId", "value": "" } ] } } }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        { "name": "GET /api/v1/notifications", "request": { "method": "GET", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/notifications", "host": ["{{baseUrl}}"], "path": ["api","v1","notifications"] } } },
+        { "name": "PATCH /api/v1/notifications/:id/read", "request": { "method": "PATCH", "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ], "url": { "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/read", "host": ["{{baseUrl}}"], "path": ["api","v1","notifications","{{notificationId}}","read"], "variable": [ { "key": "notificationId", "value": "" } ] } } }
+      ]
+    }
+  ]
+}

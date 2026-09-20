@@ -24,3 +24,9 @@ coverage/
 # npm
 npm-debug.log*
 /src/generated/prisma
+
+# AI agent/skill tooling (local caches, not part of the app)
+.agents/
+.claude/
+.windsurf/
+skills-lock.json

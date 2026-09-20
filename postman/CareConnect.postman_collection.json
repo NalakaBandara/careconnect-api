@@ -6,10 +6,11 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
-    { "key": "devUserSub", "value": "auth0|dev-local-user" },
+    { "key": "devUserSub", "value": "4" },
     { "key": "devUserEmail", "value": "dev-local-user@example.com" },
     { "key": "authToken", "value": "" },
-    { "key": "m2mToken", "value": "" },
+    { "key": "loginEmail", "value": "john@gmail.com" },
+    { "key": "loginPassword", "value": "Password123!" },
     { "key": "clinicId", "value": "1" },
     { "key": "serviceId", "value": "1" },
     { "key": "userId", "value": "1" },
@@ -19,6 +20,16 @@
     { "key": "appointmentId", "value": "1" },
     { "key": "roleId", "value": "1" }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
     {
       "name": "Users",
@@ -1203,11 +1214,80 @@
       "name": "Auth",
       "item": [
         {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save the JWT so every other request (collection-level Bearer auth) sends it automatically",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const token = pm.response.json().accessToken;",
+                  "  if (token) { pm.collectionVariables.set('authToken', token); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.{{$timestamp}}@example.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"phone\": \"+15555550111\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "description": "Public. Creates a PATIENT account and returns { data, accessToken }. The token is saved to {{authToken}} automatically. Password must be at least 8 characters; the email is made unique with a timestamp so this can be re-run."
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save the JWT so every other request (collection-level Bearer auth) sends it automatically",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const token = pm.response.json().accessToken;",
+                  "  if (token) { pm.collectionVariables.set('authToken', token); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "description": "Public. Returns { data, accessToken } (valid 1 hour, no refresh token) and saves the token to {{authToken}}. Run this first, then any other request."
+        },
+        {
           "name": "Protected - Current User Info",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{authToken}}" },
               { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
               { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
             ],
@@ -1217,24 +1297,7 @@
               "path": ["api", "protected"]
             }
           },
-          "description": "Returns the authenticated CareConnect user and roles. Requires a human token (or the dev headers when AUTH_ENABLED=false)."
-        },
-        {
-          "name": "M2M Ping (scope read:system)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{m2mToken}}" },
-              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
-              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/m2m/ping",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "m2m", "ping"]
-            }
-          },
-          "description": "M2M demo endpoint, authorized by scope rather than user role. Needs a client-credentials token with read:system; with AUTH_ENABLED=false the scope comes from DEV_USER_SCOPE."
+          "description": "Returns the authenticated CareConnect user and roles. Needs the Bearer token from Register/Login (or the dev headers when AUTH_ENABLED=false)."
         }
       ]
     },
