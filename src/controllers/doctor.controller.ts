@@ -171,10 +171,22 @@ export const getDoctorById = async (req: Request, res: Response) => {
             });
         }
 
-        const doctor = await prisma.doctorProfile.findUnique({
-            where: { id: doctorProfileId },
-            include: doctorDetailIncludes,
+        const isGuest = res.locals.isGuest === true;
 
+        const doctor = await prisma.doctorProfile.findFirst({
+            where: {
+                id: doctorProfileId,
+                // Guests only see verified doctors with an active account who work at an ACTIVE clinic;
+                // anyone else is reported as "not found", never "forbidden"
+                ...(isGuest
+                    ? {
+                          isVerified: true,
+                          user: { status: "ACTIVE" },
+                          doctorClinics: { some: { clinic: { status: "ACTIVE" } } },
+                      }
+                    : {}),
+            },
+            include: isGuest ? doctorPublicIncludes : doctorDetailIncludes,
         });
 
         if (!doctor) {
@@ -186,7 +198,9 @@ export const getDoctorById = async (req: Request, res: Response) => {
             });
         }
 
-        return res.status(200).json(serializeDoctorDetail(doctor));
+        return res
+            .status(200)
+            .json(isGuest ? serializeDoctorPublic(doctor) : serializeDoctorDetail(doctor));
     } catch (error) {
         logError("Get doctor failed:", error);
 

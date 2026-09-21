@@ -23,7 +23,7 @@ const router = Router();
 
 // Browsing doctors is public: guests (no Authorization header) get a reduced view, logged-in users the full one
 router.get("/", optionalAuth, getDoctors);
-router.get("/:id", checkJwt, loadCurrentUser, getDoctorById);
+router.get("/:id", optionalAuth, getDoctorById);
 router.post("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), createDoctor);
 router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), updateDoctor);
 router.get("/:id/schedules", checkJwt, loadCurrentUser, getDoctorSchedules);
