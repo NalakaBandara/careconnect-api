@@ -21,7 +21,7 @@ import doctorServiceRoutes from "./routes/doctorService.routes.js";
 import doctorSpecialtyRoutes from "./routes/doctorSpecialty.routes.js";
 import checkinRoutes from "./routes/checkin.routes.js";
 import { logError } from './utils/logError.js';
-
+import { requestLogger } from './middleware/request-logger.middleware.js';
 
 const app = express();
 
@@ -128,5 +128,5 @@ app.use("/api/v1/doctor-schedules", doctorScheduleRoutes);
 app.use("/api/v1/doctor-services", doctorServiceRoutes);
 app.use("/api/v1/doctor-specialties", doctorSpecialtyRoutes);
 app.use("/api/v1/check-ins", checkinRoutes);
-
+app.use(requestLogger);
 export default app;
