@@ -213,6 +213,7 @@ model Appointment {
   status           String                     @default("PENDING") @db.VarChar(30)
   reason           String?
   notes            String?
+  bookingReference String?                    @unique @db.VarChar(20)
   createdAt        DateTime                   @default(now())
   updatedAt        DateTime                   @updatedAt
   clinic           Clinic                     @relation(fields: [clinicId], references: [id])

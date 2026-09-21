@@ -838,7 +838,8 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "appointments"]
             }
-          }
+          },
+          "description": "The response includes a server-generated `bookingReference` (e.g. CC-4821-MEH) - a human-friendly lookup code, not something the client sends."
         },
         {
           "name": "Update Appointment Status",

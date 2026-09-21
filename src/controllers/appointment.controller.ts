@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import crypto from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { formatTime, parseTime } from "../utils/dayOfWeek.js";
 
@@ -16,6 +17,18 @@ const parseId = (value: string | string[] | undefined): bigint | null => {
 
 const parseDateOnly = (value: string): Date => new Date(`${value}T00:00:00.000Z`);
 const formatDateOnly = (value: Date): string => value.toISOString().substring(0, 10);
+
+const BOOKING_REFERENCE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Human-friendly lookup code shown to patients, e.g. CC-4821-MEH - not a security token
+const generateBookingReference = (): string => {
+    const digits = crypto.randomInt(1000, 10000);
+    const letters = Array.from({ length: 3 }, () =>
+        BOOKING_REFERENCE_LETTERS[crypto.randomInt(BOOKING_REFERENCE_LETTERS.length)]
+    ).join("");
+
+    return `CC-${digits}-${letters}`;
+};
 
 const appointmentIncludes = {
     doctorProfile: { include: { user: true } },
@@ -46,6 +59,7 @@ const serializeAppointment = (appointment: any) => ({
     startTime: formatTime(appointment.startTime),
     endTime: formatTime(appointment.endTime),
     status: appointment.status,
+    bookingReference: appointment.bookingReference,
     reason: appointment.reason,
     notes: appointment.notes,
     createdAt: appointment.createdAt.toISOString(),
@@ -312,29 +326,52 @@ export const createAppointment = async (req: Request, res: Response) => {
             });
         }
 
-        const appointment = await prisma.appointment.create({
-            data: {
-                patientId: effectivePatientId,
-                doctorProfileId: parsedDoctorProfileId,
-                clinicId: parsedClinicId,
-                serviceId: parsedServiceId,
-                doctorScheduleId: parsedDoctorScheduleId,
-                appointmentDate: parsedAppointmentDate,
-                startTime: parseTime(startTime),
-                endTime: parseTime(endTime),
-                status: "PENDING",
-                reason: reason || null,
-                notes: notes || null,
-                statusHistory: {
-                    create: {
+        let appointment;
+        let bookingReferenceAttempts = 0;
+
+        while (true) {
+            try {
+                appointment = await prisma.appointment.create({
+                    data: {
+                        patientId: effectivePatientId,
+                        doctorProfileId: parsedDoctorProfileId,
+                        clinicId: parsedClinicId,
+                        serviceId: parsedServiceId,
+                        doctorScheduleId: parsedDoctorScheduleId,
+                        appointmentDate: parsedAppointmentDate,
+                        startTime: parseTime(startTime),
+                        endTime: parseTime(endTime),
                         status: "PENDING",
-                        reason: "Appointment created",
-                        changedByUserId: currentUser.id,
+                        reason: reason || null,
+                        notes: notes || null,
+                        bookingReference: generateBookingReference(),
+                        statusHistory: {
+                            create: {
+                                status: "PENDING",
+                                reason: "Appointment created",
+                                changedByUserId: currentUser.id,
+                            },
+                        },
                     },
-                },
-            },
-            include: appointmentIncludes,
-        });
+                    include: appointmentIncludes,
+                });
+
+                break;
+            } catch (error: any) {
+                // Extremely unlikely random-reference collision - regenerate and retry a few times
+                if (
+                    error?.code === "P2002" &&
+                    error?.meta?.target?.includes("bookingReference") &&
+                    bookingReferenceAttempts < 5
+                ) {
+                    bookingReferenceAttempts += 1;
+
+                    continue;
+                }
+
+                throw error;
+            }
+        }
 
         return res.status(201).json(serializeAppointment(appointment));
     } catch (error) {
