@@ -2,6 +2,7 @@ import { Router } from "express";
 import { checkJwt } from "../middleware/auth0.middleware.js";
 import { loadCurrentUser } from "../middleware/current-user.middleware.js";
 import { requireRoles } from "../middleware/role.middleware.js";
+import { optionalAuth } from "../middleware/optional-auth.middleware.js";
 import {
     getServices,
     getServiceById,
@@ -11,8 +12,8 @@ import {
 
 const router = Router();
 
-// Browsing services is open to any authenticated human (patients need this to book appointments)
-router.get("/", checkJwt, loadCurrentUser, getServices);
+// Browsing services is public: guests (no Authorization header) only see ACTIVE services
+router.get("/", optionalAuth, getServices);
 router.get("/:id", checkJwt, loadCurrentUser, getServiceById);
 router.post("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), createService);
 router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), updateService);

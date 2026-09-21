@@ -25,6 +25,7 @@ const serializeService = (service: any) => ({
 export const getServices = async (req: Request, res: Response) => {
     try {
         const { clinicId, doctorId } = req.query;
+        const isGuest = res.locals.isGuest === true;
 
         const where: any = {};
 
@@ -56,6 +57,11 @@ export const getServices = async (req: Request, res: Response) => {
             }
 
             where.doctorServices = { some: { doctorProfileId: parsedDoctorId } };
+        }
+
+        if (isGuest) {
+            // Guests only ever see ACTIVE services
+            where.status = "ACTIVE";
         }
 
         const services = await prisma.service.findMany({

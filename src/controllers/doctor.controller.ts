@@ -48,6 +48,13 @@ const serializeDoctorDetail = (doctorProfile: any) => ({
     })),
 });
 
+// Guests get a reduced view: no userId, no licenseNumber
+const serializeDoctorPublic = (doctorProfile: any) => {
+    const { userId, licenseNumber, ...publicFields } = serializeDoctorDetail(doctorProfile);
+    return publicFields;
+};
+
+
 // Slimmer shape used by POST response (matches contract - specialties without description)
 const serializeDoctorCreated = (doctorProfile: any) => ({
     id: doctorProfile.id.toString(),
@@ -72,9 +79,22 @@ const doctorDetailIncludes = {
     doctorClinics: { include: { clinic: true } },
 };
 
+// Guests: load only the user fields the public view needs (never passwordHash, nic, email, ...)
+// and only ACTIVE clinics, so inactive clinics never leak through a doctor
+const doctorPublicIncludes = {
+    user: { select: { firstName: true, lastName: true, profilePhoto: true } },
+    doctorSpecialties: { include: { specialty: true } },
+    doctorClinics: {
+        where: { clinic: { status: "ACTIVE" } },
+        include: { clinic: { select: { id: true, name: true } } },
+    },
+};
+
+
 export const getDoctors = async (req: Request, res: Response) => {
     try {
         const { clinicId, specialtyId } = req.query;
+        const isGuest = res.locals.isGuest === true;
 
         const where: any = {};
 
@@ -108,14 +128,21 @@ export const getDoctors = async (req: Request, res: Response) => {
             where.doctorSpecialties = { some: { specialtyId: parsedSpecialtyId } };
         }
 
+        if (isGuest) {
+            // Guests only see verified doctors with an active account who work at an ACTIVE clinic
+            where.isVerified = true;
+            where.user = { status: "ACTIVE" };
+            where.AND = [{ doctorClinics: { some: { clinic: { status: "ACTIVE" } } } }];
+        }
+
         const doctors = await prisma.doctorProfile.findMany({
             where,
-            include: doctorDetailIncludes,
+            include: isGuest ? doctorPublicIncludes : doctorDetailIncludes,
             orderBy: { id: "asc" },
         });
 
         return res.status(200).json({
-            data: doctors.map(serializeDoctorDetail),
+            data: doctors.map(isGuest ? serializeDoctorPublic : serializeDoctorDetail),
         });
     } catch (error) {
         logError("List doctors failed:", error);
@@ -128,6 +155,8 @@ export const getDoctors = async (req: Request, res: Response) => {
         });
     }
 };
+
+
 
 export const getDoctorById = async (req: Request, res: Response) => {
     try {
@@ -145,6 +174,7 @@ export const getDoctorById = async (req: Request, res: Response) => {
         const doctor = await prisma.doctorProfile.findUnique({
             where: { id: doctorProfileId },
             include: doctorDetailIncludes,
+
         });
 
         if (!doctor) {

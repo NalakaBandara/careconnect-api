@@ -3,6 +3,7 @@ import { checkJwt } from "../middleware/auth0.middleware.js";
 import { loadCurrentUser } from "../middleware/current-user.middleware.js";
 import { requireRoles } from "../middleware/role.middleware.js";
 import { slotsLimiter } from "../middleware/rate-limit.middleware.js";
+import { optionalAuth } from "../middleware/optional-auth.middleware.js";
 import {
     getDoctors,
     getDoctorById,
@@ -20,8 +21,8 @@ import {
 
 const router = Router();
 
-// Browsing doctors is open to any authenticated human (patients need this to book appointments)
-router.get("/", checkJwt, loadCurrentUser, getDoctors);
+// Browsing doctors is public: guests (no Authorization header) get a reduced view, logged-in users the full one
+router.get("/", optionalAuth, getDoctors);
 router.get("/:id", checkJwt, loadCurrentUser, getDoctorById);
 router.post("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), createDoctor);
 router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), updateDoctor);

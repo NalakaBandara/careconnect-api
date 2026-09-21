@@ -2,6 +2,7 @@ import { Router } from "express";
 import { checkJwt } from "../middleware/auth0.middleware.js";
 import { loadCurrentUser } from "../middleware/current-user.middleware.js";
 import { requireRoles } from "../middleware/role.middleware.js";
+import { optionalAuth } from "../middleware/optional-auth.middleware.js";
 import {
     getClinics,
     getClinicById,
@@ -22,8 +23,8 @@ import {
 
 const router = Router();
 
-// Browsing clinics is open to any authenticated human (patients need this to book appointments)
-router.get("/", checkJwt, loadCurrentUser, getClinics);
+// Browsing clinics is public: guests (no Authorization header) get a reduced view, logged-in users the full one
+router.get("/", optionalAuth, getClinics);
 router.get("/:id", checkJwt, loadCurrentUser, getClinicById);
 router.post("/", checkJwt, loadCurrentUser, requireRoles("ADMIN"), createClinic);
 router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN", "CLINIC_ADMIN"), updateClinic);

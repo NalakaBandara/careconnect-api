@@ -41,9 +41,17 @@ const serializeClinic = (clinic: any) => ({
     status: clinic.status,
 });
 
+// Guests get a reduced view: no email
+const serializeClinicPublic = (clinic: any) => {
+    const { email, ...publicFields } = serializeClinic(clinic);
+    return publicFields;
+};
+
+
 export const getClinics = async (req: Request, res: Response) => {
     try {
         const { city, status } = req.query;
+        const isGuest = res.locals.isGuest === true;
 
         const where: any = {};
 
@@ -51,7 +59,10 @@ export const getClinics = async (req: Request, res: Response) => {
             where.city = { equals: city, mode: "insensitive" };
         }
 
-        if (typeof status === "string") {
+        if (isGuest) {
+            // Guests only ever see ACTIVE clinics; any ?status= they send is ignored
+            where.status = "ACTIVE";
+        } else if (typeof status === "string") {
             where.status = status;
         }
 
@@ -63,7 +74,8 @@ export const getClinics = async (req: Request, res: Response) => {
         });
 
         return res.status(200).json({
-            data: clinics.map(serializeClinic),
+            data: clinics.map(isGuest ? serializeClinicPublic : serializeClinic),
+
         });
     } catch (error) {
         logError("List clinics failed:", error);
