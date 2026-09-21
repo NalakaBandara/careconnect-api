@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
-    "start": "node dist/server.js",
+    "start": "node --experimental-loader newrelic/esm-loader.mjs -r newrelic dist/server.js",
     "db:seed": "tsx prisma/seed.ts",
     "db:migrate:deploy": "prisma migrate deploy"
   },
