@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { hashPassword } from "../utils/password.js";
@@ -74,7 +75,7 @@ export const getUsers = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error("List users failed:", error);
+        logError("List users failed:", error);
 
         return res.status(500).json({
             error: {
@@ -189,7 +190,7 @@ export const createUser = async (req: Request, res: Response) => {
                 );
         }
 
-        console.error("Create user failed:", error);
+        logError("Create user failed:", error);
 
         return res.status(500).json({
             error: {
@@ -273,7 +274,7 @@ export const updateMyProfile = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Update my profile failed:", error);
+        logError("Update my profile failed:", error);
 
         return res.status(500).json({
             error: {
@@ -339,7 +340,7 @@ export const getUserById = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error("Get user by id failed:", error);
+        logError("Get user by id failed:", error);
 
         return res.status(500).json({
             error: {
@@ -446,7 +447,7 @@ export const updateUserById = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Update user by id failed:", error);
+        logError("Update user by id failed:", error);
 
         return res.status(500).json({
             error: {

@@ -20,6 +20,8 @@ import doctorScheduleRoutes from "./routes/doctorSchedule.routes.js";
 import doctorServiceRoutes from "./routes/doctorService.routes.js";
 import doctorSpecialtyRoutes from "./routes/doctorSpecialty.routes.js";
 import checkinRoutes from "./routes/checkin.routes.js";
+import { logError } from './utils/logError.js';
+
 
 const app = express();
 
@@ -57,7 +59,7 @@ app.get('/health/db', async (req, res) => {
             database: 'connected'
         });
     } catch (error) {
-        console.error('Database connection failed:', error);
+        logError('Database connection failed:', error);
 
         res.status(500).json({
             status: 'error',

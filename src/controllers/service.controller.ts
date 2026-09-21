@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 
@@ -66,7 +67,7 @@ export const getServices = async (req: Request, res: Response) => {
             data: services.map(serializeService),
         });
     } catch (error) {
-        console.error("List services failed:", error);
+        logError("List services failed:", error);
 
         return res.status(500).json({
             error: {
@@ -103,7 +104,7 @@ export const getServiceById = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeService(service));
     } catch (error) {
-        console.error("Get service failed:", error);
+        logError("Get service failed:", error);
 
         return res.status(500).json({
             error: {
@@ -147,7 +148,7 @@ export const createService = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create service failed:", error);
+        logError("Create service failed:", error);
 
         return res.status(500).json({
             error: {
@@ -212,7 +213,7 @@ export const updateService = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Update service failed:", error);
+        logError("Update service failed:", error);
 
         return res.status(500).json({
             error: {

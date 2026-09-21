@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 
@@ -58,7 +59,7 @@ export const loadCurrentUser = async (
 
         next();
     } catch (error) {
-        console.error('Failed to load current user:', error);
+        logError('Failed to load current user:', error);
 
         return res.status(500).json({
             error: {

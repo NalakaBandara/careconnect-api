@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 
@@ -58,7 +59,7 @@ export const getAuditLogs = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("List audit logs failed:", error);
+        logError("List audit logs failed:", error);
 
         return res.status(500).json({
             error: {

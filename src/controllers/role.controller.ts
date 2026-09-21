@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 
@@ -17,7 +18,7 @@ export const getRoles = async (req: Request, res: Response) => {
             data: roles.map(serializeRole),
         });
     } catch (error) {
-        console.error("List roles failed:", error);
+        logError("List roles failed:", error);
 
         return res.status(500).json({
             error: {
@@ -59,7 +60,7 @@ export const createRole = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create role failed:", error);
+        logError("Create role failed:", error);
 
         return res.status(500).json({
             error: {
@@ -124,7 +125,7 @@ export const assignUserRole = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Assign user role failed:", error);
+        logError("Assign user role failed:", error);
 
         return res.status(500).json({
             error: {

@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { DAYS_OF_WEEK, dayOfWeekToInt, formatTime, parseTime } from "../utils/dayOfWeek.js";
@@ -65,7 +66,7 @@ export const getClinics = async (req: Request, res: Response) => {
             data: clinics.map(serializeClinic),
         });
     } catch (error) {
-        console.error("List clinics failed:", error);
+        logError("List clinics failed:", error);
 
         return res.status(500).json({
             error: {
@@ -108,7 +109,7 @@ export const getClinicById = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeClinic(clinic));
     } catch (error) {
-        console.error("Get clinic failed:", error);
+        logError("Get clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -168,7 +169,7 @@ export const createClinic = async (req: Request, res: Response) => {
 
         return res.status(201).json(serializeClinic(clinic));
     } catch (error) {
-        console.error("Create clinic failed:", error);
+        logError("Create clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -265,7 +266,7 @@ export const updateClinic = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Update clinic failed:", error);
+        logError("Update clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -304,7 +305,7 @@ export const deleteClinic = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Delete clinic failed:", error);
+        logError("Delete clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -349,7 +350,7 @@ export const getClinicOperatingHours = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("Get clinic operating hours failed:", error);
+        logError("Get clinic operating hours failed:", error);
 
         return res.status(500).json({
             error: {
@@ -447,7 +448,7 @@ export const createClinicOperatingHour = async (req: Request, res: Response) => 
             });
         }
 
-        console.error("Create clinic operating hour failed:", error);
+        logError("Create clinic operating hour failed:", error);
 
         return res.status(500).json({
             error: {
@@ -548,7 +549,7 @@ export const updateClinicOperatingHours = async (req: Request, res: Response) =>
             })),
         });
     } catch (error) {
-        console.error("Update clinic operating hours failed:", error);
+        logError("Update clinic operating hours failed:", error);
 
         return res.status(500).json({
             error: {
@@ -611,7 +612,7 @@ export const getClinicDoctors = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("Get clinic doctors failed:", error);
+        logError("Get clinic doctors failed:", error);
 
         return res.status(500).json({
             error: {
@@ -656,7 +657,7 @@ export const getClinicServices = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("Get clinic services failed:", error);
+        logError("Get clinic services failed:", error);
 
         return res.status(500).json({
             error: {
@@ -743,7 +744,7 @@ export const addClinicService = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Add clinic service failed:", error);
+        logError("Add clinic service failed:", error);
 
         return res.status(500).json({
             error: {
@@ -806,7 +807,7 @@ export const removeClinicService = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Remove clinic service failed:", error);
+        logError("Remove clinic service failed:", error);
 
         return res.status(500).json({
             error: {
@@ -883,7 +884,7 @@ export const createClinicService = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create clinic service failed:", error);
+        logError("Create clinic service failed:", error);
 
         return res.status(500).json({
             error: {
@@ -942,7 +943,7 @@ export const getClinicUsers = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("Get clinic users failed:", error);
+        logError("Get clinic users failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1027,7 +1028,7 @@ export const addClinicUser = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Add clinic user failed:", error);
+        logError("Add clinic user failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1090,7 +1091,7 @@ export const removeClinicUser = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Remove clinic user failed:", error);
+        logError("Remove clinic user failed:", error);
 
         return res.status(500).json({
             error: {

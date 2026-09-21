@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 
@@ -29,7 +30,7 @@ export const getSpecialties = async (req: Request, res: Response) => {
             data: specialties.map(serializeSpecialty),
         });
     } catch (error) {
-        console.error("List specialties failed:", error);
+        logError("List specialties failed:", error);
 
         return res.status(500).json({
             error: {
@@ -71,7 +72,7 @@ export const createSpecialty = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create specialty failed:", error);
+        logError("Create specialty failed:", error);
 
         return res.status(500).json({
             error: {
@@ -134,7 +135,7 @@ export const updateSpecialty = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Update specialty failed:", error);
+        logError("Update specialty failed:", error);
 
         return res.status(500).json({
             error: {

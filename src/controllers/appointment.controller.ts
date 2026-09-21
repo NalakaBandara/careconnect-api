@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import crypto from "node:crypto";
 import { prisma } from "../config/prisma.js";
@@ -135,7 +136,7 @@ export const getMyAppointments = async (req: Request, res: Response) => {
             data: appointments.map(serializeAppointment),
         });
     } catch (error) {
-        console.error("List my appointments failed:", error);
+        logError("List my appointments failed:", error);
 
         return res.status(500).json({
             error: {
@@ -186,7 +187,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeAppointment(appointment));
     } catch (error) {
-        console.error("Get appointment failed:", error);
+        logError("Get appointment failed:", error);
 
         return res.status(500).json({
             error: {
@@ -386,7 +387,7 @@ export const createAppointment = async (req: Request, res: Response) => {
 
         return res.status(201).json(serializeAppointment(appointment));
     } catch (error) {
-        console.error("Create appointment failed:", error);
+        logError("Create appointment failed:", error);
 
         return res.status(500).json({
             error: {
@@ -596,7 +597,7 @@ export const updateAppointment = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeAppointment(appointment));
     } catch (error) {
-        console.error("Update appointment failed:", error);
+        logError("Update appointment failed:", error);
 
         return res.status(500).json({
             error: {
@@ -660,7 +661,7 @@ export const getAppointmentStatusHistory = async (req: Request, res: Response) =
             })),
         });
     } catch (error) {
-        console.error("Get appointment status history failed:", error);
+        logError("Get appointment status history failed:", error);
 
         return res.status(500).json({
             error: {
@@ -737,7 +738,7 @@ export const getAppointments = async (req: Request, res: Response) => {
             data: appointments.map(serializeAppointment),
         });
     } catch (error) {
-        console.error("List appointments failed:", error);
+        logError("List appointments failed:", error);
 
         return res.status(500).json({
             error: {
@@ -802,7 +803,7 @@ export const cancelAppointment = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeAppointment(appointment));
     } catch (error) {
-        console.error("Cancel appointment failed:", error);
+        logError("Cancel appointment failed:", error);
 
         return res.status(500).json({
             error: {

@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
@@ -89,7 +90,7 @@ export const register = async (req: Request, res: Response) => {
                 );
         }
 
-        console.error("Register failed:", error);
+        logError("Register failed:", error);
 
         return res.status(500).json({
             error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to register user" },
@@ -133,7 +134,7 @@ export const login = async (req: Request, res: Response) => {
             accessToken,
         });
     } catch (error) {
-        console.error("Login failed:", error);
+        logError("Login failed:", error);
 
         return res.status(500).json({
             error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to login" },

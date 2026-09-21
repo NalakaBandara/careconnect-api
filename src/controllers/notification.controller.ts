@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 
@@ -71,7 +72,7 @@ export const getMyNotifications = async (req: Request, res: Response) => {
             data: notifications.map(serializeNotification),
         });
     } catch (error) {
-        console.error("List notifications failed:", error);
+        logError("List notifications failed:", error);
 
         return res.status(500).json({
             error: {
@@ -119,7 +120,7 @@ export const createNotification = async (req: Request, res: Response) => {
 
         return res.status(201).json(serializeNotification(notification));
     } catch (error) {
-        console.error("Create notification failed:", error);
+        logError("Create notification failed:", error);
 
         return res.status(500).json({
             error: {
@@ -180,7 +181,7 @@ export const markNotificationRead = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeNotification(notification));
     } catch (error) {
-        console.error("Update notification failed:", error);
+        logError("Update notification failed:", error);
 
         return res.status(500).json({
             error: {

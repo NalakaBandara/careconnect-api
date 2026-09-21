@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { DAYS_OF_WEEK, dayOfWeekToInt, formatTime, parseTime } from "../utils/dayOfWeek.js";
@@ -117,7 +118,7 @@ export const getDoctors = async (req: Request, res: Response) => {
             data: doctors.map(serializeDoctorDetail),
         });
     } catch (error) {
-        console.error("List doctors failed:", error);
+        logError("List doctors failed:", error);
 
         return res.status(500).json({
             error: {
@@ -157,7 +158,7 @@ export const getDoctorById = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeDoctorDetail(doctor));
     } catch (error) {
-        console.error("Get doctor failed:", error);
+        logError("Get doctor failed:", error);
 
         return res.status(500).json({
             error: {
@@ -275,7 +276,7 @@ export const createDoctor = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create doctor failed:", error);
+        logError("Create doctor failed:", error);
 
         return res.status(500).json({
             error: {
@@ -328,7 +329,7 @@ export const updateDoctor = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Update doctor failed:", error);
+        logError("Update doctor failed:", error);
 
         return res.status(500).json({
             error: {
@@ -388,7 +389,7 @@ export const getDoctorSchedules = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("Get doctor schedules failed:", error);
+        logError("Get doctor schedules failed:", error);
 
         return res.status(500).json({
             error: {
@@ -460,7 +461,7 @@ export const createDoctorSchedule = async (req: Request, res: Response) => {
             isActive: schedule.isActive,
         });
     } catch (error) {
-        console.error("Create doctor schedule failed:", error);
+        logError("Create doctor schedule failed:", error);
 
         return res.status(500).json({
             error: {
@@ -546,7 +547,7 @@ export const updateDoctorSchedule = async (req: Request, res: Response) => {
             isActive: schedule.isActive,
         });
     } catch (error) {
-        console.error("Update doctor schedule failed:", error);
+        logError("Update doctor schedule failed:", error);
 
         return res.status(500).json({
             error: {
@@ -655,7 +656,7 @@ export const getDoctorAvailableSlots = async (req: Request, res: Response) => {
             slots,
         });
     } catch (error) {
-        console.error("Get doctor available slots failed:", error);
+        logError("Get doctor available slots failed:", error);
 
         return res.status(500).json({
             error: {
@@ -736,7 +737,7 @@ export const addDoctorSpecialty = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Add doctor specialty failed:", error);
+        logError("Add doctor specialty failed:", error);
 
         return res.status(500).json({
             error: {
@@ -796,7 +797,7 @@ export const removeDoctorSpecialty = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Remove doctor specialty failed:", error);
+        logError("Remove doctor specialty failed:", error);
 
         return res.status(500).json({
             error: {
@@ -877,7 +878,7 @@ export const addDoctorClinic = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Add doctor clinic failed:", error);
+        logError("Add doctor clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -937,7 +938,7 @@ export const removeDoctorClinic = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Remove doctor clinic failed:", error);
+        logError("Remove doctor clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1009,7 +1010,7 @@ export const createDoctorClinic = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create doctor clinic failed:", error);
+        logError("Create doctor clinic failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1081,7 +1082,7 @@ export const createDoctorSpecialty = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create doctor specialty failed:", error);
+        logError("Create doctor specialty failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1153,7 +1154,7 @@ export const createDoctorService = async (req: Request, res: Response) => {
             });
         }
 
-        console.error("Create doctor service failed:", error);
+        logError("Create doctor service failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1218,7 +1219,7 @@ export const getDoctorSchedulesFlat = async (req: Request, res: Response) => {
             })),
         });
     } catch (error) {
-        console.error("List doctor schedules failed:", error);
+        logError("List doctor schedules failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1289,7 +1290,7 @@ export const createDoctorScheduleFlat = async (req: Request, res: Response) => {
             isActive: schedule.isActive,
         });
     } catch (error) {
-        console.error("Create doctor schedule (flat) failed:", error);
+        logError("Create doctor schedule (flat) failed:", error);
 
         return res.status(500).json({
             error: {
@@ -1375,7 +1376,7 @@ export const updateDoctorScheduleFlat = async (req: Request, res: Response) => {
             isActive: schedule.isActive,
         });
     } catch (error) {
-        console.error("Update doctor schedule (flat) failed:", error);
+        logError("Update doctor schedule (flat) failed:", error);
 
         return res.status(500).json({
             error: {

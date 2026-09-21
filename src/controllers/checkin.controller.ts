@@ -1,3 +1,4 @@
+import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { canAccessAppointment } from "./appointment.controller.js";
@@ -76,7 +77,7 @@ export const getCheckIn = async (req: Request, res: Response) => {
 
         return res.status(200).json(serializeCheckIn(checkIn));
     } catch (error) {
-        console.error("Get check-in failed:", error);
+        logError("Get check-in failed:", error);
 
         return res.status(500).json({
             error: {
@@ -185,7 +186,7 @@ const performCheckIn = async (appointmentId: bigint, req: Request, res: Response
             });
         }
 
-        console.error("Create check-in failed:", error);
+        logError("Create check-in failed:", error);
 
         return res.status(500).json({
             error: {
