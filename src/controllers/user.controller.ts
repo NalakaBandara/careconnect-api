@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { hashPassword } from "../utils/password.js";
+import { fieldErrorResponse } from "../utils/errors.js";
 
 export const getMyProfile = async (req: Request, res: Response) => {
     // loadCurrentUser has already resolved and attached the DB row (with roles)
@@ -99,12 +100,16 @@ export const createUser = async (req: Request, res: Response) => {
         } = req.body;
 
         if (!email || !password || !firstName || !lastName) {
-            return res.status(400).json({
-                error: {
-                    code: "INVALID_REQUEST",
-                    message: "email, password, firstName and lastName are required",
-                },
-            });
+            const fields: Record<string, string[]> = {};
+
+            if (!email) fields.email = ["Email is required"];
+            if (!password) fields.password = ["Password is required"];
+            if (!firstName) fields.firstName = ["First name is required"];
+            if (!lastName) fields.lastName = ["Last name is required"];
+
+            return res
+                .status(400)
+                .json(fieldErrorResponse(fields, "email, password, firstName and lastName are required"));
         }
 
         const patientRole = await prisma.role.findUnique({
@@ -167,12 +172,21 @@ export const createUser = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         if (error?.code === "P2002") {
-            return res.status(409).json({
-                error: {
-                    code: "CONFLICT",
-                    message: "A user with this email or NIC already exists",
-                },
-            });
+            const target: string[] = error?.meta?.target ?? [];
+            const fields: Record<string, string[]> = {};
+
+            if (target.includes("email")) fields.email = ["Email already registered"];
+            if (target.includes("nic")) fields.nic = ["NIC already registered"];
+
+            return res
+                .status(409)
+                .json(
+                    fieldErrorResponse(
+                        Object.keys(fields).length ? fields : { email: ["Email or NIC already registered"] },
+                        "A user with this email or NIC already exists",
+                        "CONFLICT"
+                    )
+                );
         }
 
         console.error("Create user failed:", error);

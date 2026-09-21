@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { signAccessToken } from "../utils/jwt.js";
+import { fieldErrorResponse } from "../utils/errors.js";
 
 const serializeAuthUser = (user: any) => ({
     id: user.id.toString(),
@@ -17,21 +18,27 @@ export const register = async (req: Request, res: Response) => {
         const { email, password, firstName, lastName, dateOfBirth, phone } = req.body;
 
         if (!email || !password || !firstName || !lastName) {
-            return res.status(400).json({
-                error: {
-                    code: "INVALID_REQUEST",
-                    message: "email, password, firstName and lastName are required",
-                },
-            });
+            const fields: Record<string, string[]> = {};
+
+            if (!email) fields.email = ["Email is required"];
+            if (!password) fields.password = ["Password is required"];
+            if (!firstName) fields.firstName = ["First name is required"];
+            if (!lastName) fields.lastName = ["Last name is required"];
+
+            return res
+                .status(400)
+                .json(fieldErrorResponse(fields, "email, password, firstName and lastName are required"));
         }
 
         if (password.length < 8) {
-            return res.status(400).json({
-                error: {
-                    code: "INVALID_REQUEST",
-                    message: "password must be at least 8 characters",
-                },
-            });
+            return res
+                .status(400)
+                .json(
+                    fieldErrorResponse(
+                        { password: ["Password must be at least 8 characters"] },
+                        "password must be at least 8 characters"
+                    )
+                );
         }
 
         const patientRole = await prisma.role.findUnique({ where: { name: "PATIENT" } });
@@ -67,9 +74,15 @@ export const register = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         if (error?.code === "P2002") {
-            return res.status(409).json({
-                error: { code: "CONFLICT", message: "A user with this email already exists" },
-            });
+            return res
+                .status(409)
+                .json(
+                    fieldErrorResponse(
+                        { email: ["Email already registered"] },
+                        "A user with this email already exists",
+                        "CONFLICT"
+                    )
+                );
         }
 
         console.error("Register failed:", error);
@@ -85,9 +98,12 @@ export const login = async (req: Request, res: Response) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({
-                error: { code: "INVALID_REQUEST", message: "email and password are required" },
-            });
+            const fields: Record<string, string[]> = {};
+
+            if (!email) fields.email = ["Email is required"];
+            if (!password) fields.password = ["Password is required"];
+
+            return res.status(400).json(fieldErrorResponse(fields, "email and password are required"));
         }
 
         const user = await prisma.user.findUnique({

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import crypto from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { formatTime, parseTime } from "../utils/dayOfWeek.js";
+import { fieldErrorResponse } from "../utils/errors.js";
 
 const parseId = (value: string | string[] | undefined): bigint | null => {
     if (typeof value !== "string") {
@@ -257,13 +258,20 @@ export const createAppointment = async (req: Request, res: Response) => {
             !startTime ||
             !endTime
         ) {
-            return res.status(400).json({
-                error: {
-                    code: "INVALID_REQUEST",
-                    message:
-                        "doctorProfileId, clinicId, serviceId, doctorScheduleId, appointmentDate, startTime and endTime are required",
-                },
-            });
+            return res.status(400).json(
+                fieldErrorResponse(
+                    {
+                        ...(parsedDoctorProfileId === null && { doctorProfileId: ["doctorProfileId is required"] }),
+                        ...(parsedClinicId === null && { clinicId: ["clinicId is required"] }),
+                        ...(parsedServiceId === null && { serviceId: ["serviceId is required"] }),
+                        ...(parsedDoctorScheduleId === null && { doctorScheduleId: ["doctorScheduleId is required"] }),
+                        ...(!appointmentDate && { appointmentDate: ["appointmentDate is required"] }),
+                        ...(!startTime && { startTime: ["startTime is required"] }),
+                        ...(!endTime && { endTime: ["endTime is required"] }),
+                    },
+                    "doctorProfileId, clinicId, serviceId, doctorScheduleId, appointmentDate, startTime and endTime are required"
+                )
+            );
         }
 
         const [doctorProfile, clinic, service, doctorSchedule, patient] = await Promise.all([
@@ -318,12 +326,15 @@ export const createAppointment = async (req: Request, res: Response) => {
         });
 
         if (conflict) {
-            return res.status(409).json({
-                error: {
-                    code: "CONFLICT",
-                    message: "This time slot is no longer available",
-                },
-            });
+            return res
+                .status(409)
+                .json(
+                    fieldErrorResponse(
+                        { startTime: ["This time slot is no longer available"] },
+                        "This time slot is no longer available",
+                        "CONFLICT"
+                    )
+                );
         }
 
         let appointment;
