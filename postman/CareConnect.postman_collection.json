@@ -862,6 +862,27 @@
           }
         },
         {
+          "name": "Reschedule Appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-dev-user-sub", "value": "{{devUserSub}}" },
+              { "key": "x-dev-user-email", "value": "{{devUserEmail}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointmentDate\": \"2026-10-12\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"09:30:00\",\n  \"reason\": \"Patient asked to move it a week later\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "description": "Same PATCH endpoint as status update - sending any of doctorProfileId/clinicId/serviceId/doctorScheduleId/appointmentDate/startTime/endTime treats this as a reschedule instead. Keeps the original bookingReference, checks the new slot for conflicts (409 if taken), and logs one status-history entry. Fields you omit keep their current value."
+        },
+        {
           "name": "Cancel Appointment",
           "request": {
             "method": "DELETE",
