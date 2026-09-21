@@ -2,6 +2,7 @@ import express from 'express';
 import { prisma } from './config/prisma.js';
 import { checkJwt } from './middleware/auth0.middleware.js';
 import { loadCurrentUser } from './middleware/current-user.middleware.js';
+import { apiLimiter } from './middleware/rate-limit.middleware.js';
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import clinicRoutes from "./routes/clinic.routes.js";
@@ -21,6 +22,17 @@ import doctorSpecialtyRoutes from "./routes/doctorSpecialty.routes.js";
 import checkinRoutes from "./routes/checkin.routes.js";
 
 const app = express();
+
+// Number of proxies in front of the app (Render's load balancer = 1). Without this every client
+// looks like the proxy's IP and shares one rate-limit bucket. Use the exact hop count, never
+// "true": that trusts a client-supplied X-Forwarded-For and lets anyone dodge the limits.
+const trustProxyHops = Number(
+    process.env.TRUST_PROXY ?? (process.env.NODE_ENV === 'production' ? 1 : 0)
+);
+app.set('trust proxy', Number.isInteger(trustProxyHops) && trustProxyHops >= 0 ? trustProxyHops : 0);
+
+// Rate limit all /api traffic before body parsing or any auth/DB work (/health is not under /api)
+app.use('/api', apiLimiter);
 
 // Middleware
 app.use(express.json());

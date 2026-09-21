@@ -2,6 +2,7 @@ import { Router } from "express";
 import { checkJwt } from "../middleware/auth0.middleware.js";
 import { loadCurrentUser } from "../middleware/current-user.middleware.js";
 import { requireRoles } from "../middleware/role.middleware.js";
+import { slotsLimiter } from "../middleware/rate-limit.middleware.js";
 import {
     getDoctors,
     getDoctorById,
@@ -28,7 +29,8 @@ router.get("/:id/schedules", checkJwt, loadCurrentUser, getDoctorSchedules);
 // Schedule management: ADMIN, or the doctor themselves (checked inside the controller)
 router.post("/:id/schedules", checkJwt, loadCurrentUser, createDoctorSchedule);
 router.put("/:id/schedules/:scheduleId", checkJwt, loadCurrentUser, updateDoctorSchedule);
-router.get("/:id/available-slots", checkJwt, loadCurrentUser, getDoctorAvailableSlots);
+// Limiter runs first so a flood is rejected before any auth or DB work
+router.get("/:id/available-slots", slotsLimiter, checkJwt, loadCurrentUser, getDoctorAvailableSlots);
 // Specialty management: ADMIN, or the doctor themselves (checked inside the controller)
 router.post("/:doctorId/specialties", checkJwt, loadCurrentUser, addDoctorSpecialty);
 router.delete("/:doctorId/specialties/:specialtyId", checkJwt, loadCurrentUser, removeDoctorSpecialty);

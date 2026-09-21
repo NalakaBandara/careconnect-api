@@ -23,3 +23,5 @@ services:
         value: "1h"
       - key: AUTH_ENABLED
         value: "true"
+      - key: TRUST_PROXY
+        value: "1"
