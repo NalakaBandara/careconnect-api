@@ -12,6 +12,7 @@ if (!JWT_SECRET) {
 export interface AccessTokenPayload {
     sub: string;
     email: string;
+    roles?: string[];
 }
 
 export const signAccessToken = (payload: AccessTokenPayload): string =>

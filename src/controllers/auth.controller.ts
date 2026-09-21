@@ -66,7 +66,11 @@ export const register = async (req: Request, res: Response) => {
             include: { userRoles: { include: { role: true } } },
         });
 
-        const accessToken = signAccessToken({ sub: user.id.toString(), email: user.email });
+        const accessToken = signAccessToken({
+            sub: user.id.toString(),
+            email: user.email,
+            roles: user.userRoles.map((userRole) => userRole.role.name),
+        });
 
         return res.status(201).json({
             data: serializeAuthUser(user),
@@ -118,7 +122,11 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
-        const accessToken = signAccessToken({ sub: user.id.toString(), email: user.email });
+        const accessToken = signAccessToken({
+            sub: user.id.toString(),
+            email: user.email,
+            roles: user.userRoles.map((userRole) => userRole.role.name),
+        });
 
         return res.status(200).json({
             data: serializeAuthUser(user),

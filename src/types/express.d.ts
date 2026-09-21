@@ -8,6 +8,7 @@ declare global {
                 payload: {
                     sub: string;
                     email?: string;
+                    roles?: string[];
                     [key: string]: unknown;
                 };
             };
