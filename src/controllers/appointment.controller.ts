@@ -397,7 +397,8 @@ export const createAppointment = async (req: Request, res: Response) => {
     }
 };
 
-export const updateAppointmentStatus = async (req: Request, res: Response) => {
+// PATCH /:id (+ alias /:id/status) - also handles rescheduling when doctor/clinic/service/schedule/date/time fields are present
+export const updateAppointment = async (req: Request, res: Response) => {
     try {
         const appointmentId = parseId(req.params.id);
 
@@ -434,23 +435,161 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
             });
         }
 
-        const { status, reason, notes } = req.body;
+        const {
+            status,
+            reason,
+            notes,
+            doctorProfileId,
+            clinicId,
+            serviceId,
+            doctorScheduleId,
+            appointmentDate,
+            startTime,
+            endTime,
+        } = req.body;
+
+        const isReschedule =
+            doctorProfileId !== undefined ||
+            clinicId !== undefined ||
+            serviceId !== undefined ||
+            doctorScheduleId !== undefined ||
+            appointmentDate !== undefined ||
+            startTime !== undefined ||
+            endTime !== undefined;
+
+        const updateData: any = {
+            status: status || undefined,
+            reason: reason ?? undefined,
+            notes: notes ?? undefined,
+        };
+
+        let statusHistoryCreate: any;
+
+        if (isReschedule) {
+            const parsedDoctorProfileId =
+                doctorProfileId !== undefined ? parseId(doctorProfileId) : existingAppointment.doctorProfileId;
+            const parsedClinicId = clinicId !== undefined ? parseId(clinicId) : existingAppointment.clinicId;
+            const parsedServiceId = serviceId !== undefined ? parseId(serviceId) : existingAppointment.serviceId;
+            const parsedDoctorScheduleId =
+                doctorScheduleId !== undefined ? parseId(doctorScheduleId) : existingAppointment.doctorScheduleId;
+
+            if (
+                parsedDoctorProfileId === null ||
+                parsedClinicId === null ||
+                parsedServiceId === null ||
+                parsedDoctorScheduleId === null
+            ) {
+                return res.status(400).json(
+                    fieldErrorResponse(
+                        {
+                            ...(parsedDoctorProfileId === null && {
+                                doctorProfileId: ["doctorProfileId must be a valid numeric identifier"],
+                            }),
+                            ...(parsedClinicId === null && {
+                                clinicId: ["clinicId must be a valid numeric identifier"],
+                            }),
+                            ...(parsedServiceId === null && {
+                                serviceId: ["serviceId must be a valid numeric identifier"],
+                            }),
+                            ...(parsedDoctorScheduleId === null && {
+                                doctorScheduleId: ["doctorScheduleId must be a valid numeric identifier"],
+                            }),
+                        },
+                        "doctorProfileId, clinicId, serviceId and doctorScheduleId must be valid numeric identifiers"
+                    )
+                );
+            }
+
+            const parsedAppointmentDate = appointmentDate
+                ? parseDateOnly(appointmentDate)
+                : existingAppointment.appointmentDate;
+            const parsedStartTime = startTime ? parseTime(startTime) : existingAppointment.startTime;
+            const parsedEndTime = endTime ? parseTime(endTime) : existingAppointment.endTime;
+
+            const [doctorProfile, clinic, service, doctorSchedule] = await Promise.all([
+                prisma.doctorProfile.findUnique({ where: { id: parsedDoctorProfileId } }),
+                prisma.clinic.findUnique({ where: { id: parsedClinicId } }),
+                prisma.service.findUnique({ where: { id: parsedServiceId } }),
+                prisma.doctorSchedule.findUnique({ where: { id: parsedDoctorScheduleId } }),
+            ]);
+
+            if (!doctorProfile || !clinic || !service || !doctorSchedule) {
+                const missing = [
+                    !doctorProfile && "doctorProfileId",
+                    !clinic && "clinicId",
+                    !service && "serviceId",
+                    !doctorSchedule && "doctorScheduleId",
+                ].filter(Boolean);
+
+                return res.status(404).json({
+                    error: {
+                        code: "NOT_FOUND",
+                        message: `No record found for: ${missing.join(", ")}`,
+                    },
+                });
+            }
+
+            if (
+                doctorSchedule.doctorProfileId !== parsedDoctorProfileId ||
+                doctorSchedule.clinicId !== parsedClinicId
+            ) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "doctorScheduleId does not belong to this doctor and clinic",
+                    },
+                });
+            }
+
+            const conflict = await prisma.appointment.findFirst({
+                where: {
+                    id: { not: appointmentId },
+                    doctorProfileId: parsedDoctorProfileId,
+                    clinicId: parsedClinicId,
+                    appointmentDate: parsedAppointmentDate,
+                    startTime: parsedStartTime,
+                    status: { not: "CANCELLED" },
+                },
+            });
+
+            if (conflict) {
+                return res
+                    .status(409)
+                    .json(
+                        fieldErrorResponse(
+                            { startTime: ["This time slot is no longer available"] },
+                            "This time slot is no longer available",
+                            "CONFLICT"
+                        )
+                    );
+            }
+
+            updateData.doctorProfileId = parsedDoctorProfileId;
+            updateData.clinicId = parsedClinicId;
+            updateData.serviceId = parsedServiceId;
+            updateData.doctorScheduleId = parsedDoctorScheduleId;
+            updateData.appointmentDate = parsedAppointmentDate;
+            updateData.startTime = parsedStartTime;
+            updateData.endTime = parsedEndTime;
+
+            statusHistoryCreate = {
+                status: status || existingAppointment.status,
+                reason: reason || "Appointment rescheduled",
+                changedByUserId: currentUser.id,
+            };
+        } else if (status) {
+            statusHistoryCreate = {
+                status,
+                reason: reason || null,
+                changedByUserId: currentUser.id,
+            };
+        }
 
         const appointment = await prisma.appointment.update({
             where: { id: appointmentId },
             data: {
-                status: status || undefined,
-                reason: reason ?? undefined,
-                notes: notes ?? undefined,
-                statusHistory: status
-                    ? {
-                          create: {
-                              status,
-                              reason: reason || null,
-                              changedByUserId: currentUser.id,
-                          },
-                      }
-                    : undefined,
+                ...updateData,
+                statusHistory: statusHistoryCreate ? { create: statusHistoryCreate } : undefined,
             },
             include: appointmentIncludes,
         });
