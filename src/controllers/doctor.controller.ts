@@ -90,7 +90,7 @@ const doctorPublicIncludes = {
     },
 };
 
-
+//Doctor Get
 export const getDoctors = async (req: Request, res: Response) => {
     try {
         const { clinicId, specialtyId } = req.query;
