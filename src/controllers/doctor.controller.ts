@@ -198,9 +198,9 @@ export const getDoctorById = async (req: Request, res: Response) => {
             });
         }
 
-        return res
-            .status(200)
-            .json(isGuest ? serializeDoctorPublic(doctor) : serializeDoctorDetail(doctor));
+        return res.status(200).json({
+            data: isGuest ? serializeDoctorPublic(doctor) : serializeDoctorDetail(doctor),
+        });
     } catch (error) {
         logError("Get doctor failed:", error);
 
