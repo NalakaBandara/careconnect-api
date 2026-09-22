@@ -675,7 +675,7 @@ export const getAppointmentStatusHistory = async (req: Request, res: Response) =
 // ADMIN-only cross-user listing with optional filters, distinct from GET /me (which is scoped to the caller)
 export const getAppointments = async (req: Request, res: Response) => {
     try {
-        const { patientId, doctorId, clinicId, status } = req.query;
+        const { patientId, doctorId, clinicId, status, fromDate, toDate } = req.query;
 
         const where: any = {};
 
@@ -726,6 +726,18 @@ export const getAppointments = async (req: Request, res: Response) => {
 
         if (typeof status === "string") {
             where.status = status;
+        }
+
+        if (fromDate || toDate) {
+            where.appointmentDate = {};
+
+            if (fromDate) {
+                where.appointmentDate.gte = parseDateOnly(fromDate as string);
+            }
+
+            if (toDate) {
+                where.appointmentDate.lte = parseDateOnly(toDate as string);
+            }
         }
 
         const appointments = await prisma.appointment.findMany({
