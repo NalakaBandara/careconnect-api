@@ -157,7 +157,7 @@ export const getDoctors = async (req: Request, res: Response) => {
 };
 
 
-
+//Get Doc by ID - Implimentation change later with QS param - Nalaka new comment to check the Pipeline
 export const getDoctorById = async (req: Request, res: Response) => {
     try {
         const doctorProfileId = parseId(req.params.id);
