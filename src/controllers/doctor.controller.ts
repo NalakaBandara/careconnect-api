@@ -129,10 +129,9 @@ export const getDoctors = async (req: Request, res: Response) => {
         }
 
         if (isGuest) {
-            // Guests only see verified doctors with an active account who work at an ACTIVE clinic
+            // Guests only see verified doctors with an active account, regardless of clinic assignment
             where.isVerified = true;
             where.user = { status: "ACTIVE" };
-            where.AND = [{ doctorClinics: { some: { clinic: { status: "ACTIVE" } } } }];
         }
 
         const doctors = await prisma.doctorProfile.findMany({
@@ -176,13 +175,12 @@ export const getDoctorById = async (req: Request, res: Response) => {
         const doctor = await prisma.doctorProfile.findFirst({
             where: {
                 id: doctorProfileId,
-                // Guests only see verified doctors with an active account who work at an ACTIVE clinic;
+                // Guests only see verified doctors with an active account, regardless of clinic assignment;
                 // anyone else is reported as "not found", never "forbidden"
                 ...(isGuest
                     ? {
                           isVerified: true,
                           user: { status: "ACTIVE" },
-                          doctorClinics: { some: { clinic: { status: "ACTIVE" } } },
                       }
                     : {}),
             },
