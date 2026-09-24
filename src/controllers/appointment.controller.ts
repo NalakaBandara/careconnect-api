@@ -1,6 +1,7 @@
 import { logError } from "../utils/logError.js";
 import { Request, Response } from "express";
 import crypto from "node:crypto";
+import QRCode from "qrcode";
 import { prisma } from "../config/prisma.js";
 import { formatTime, parseTime } from "../utils/dayOfWeek.js";
 import { fieldErrorResponse } from "../utils/errors.js";
@@ -38,7 +39,12 @@ const appointmentIncludes = {
     service: true,
 };
 
-const serializeAppointment = (appointment: any) => ({
+// QR encodes only the appointment ID. It's generated fresh on every response rather than
+// stored, since it's fully deterministic from the (immutable) id - no DB column needed.
+const generateAppointmentQrCode = (appointmentId: bigint): Promise<string> =>
+    QRCode.toDataURL(appointmentId.toString());
+
+const serializeAppointment = async (appointment: any) => ({
     id: appointment.id.toString(),
     patientId: appointment.patientId.toString(),
     doctor: {
@@ -64,6 +70,7 @@ const serializeAppointment = (appointment: any) => ({
     bookingReference: appointment.bookingReference,
     reason: appointment.reason,
     notes: appointment.notes,
+    qrCode: await generateAppointmentQrCode(appointment.id),
     createdAt: appointment.createdAt.toISOString(),
     updatedAt: appointment.updatedAt.toISOString(),
 });
@@ -133,7 +140,7 @@ export const getMyAppointments = async (req: Request, res: Response) => {
         });
 
         return res.status(200).json({
-            data: appointments.map(serializeAppointment),
+            data: await Promise.all(appointments.map(serializeAppointment)),
         });
     } catch (error) {
         logError("List my appointments failed:", error);
@@ -185,7 +192,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
             });
         }
 
-        return res.status(200).json(serializeAppointment(appointment));
+        return res.status(200).json(await serializeAppointment(appointment));
     } catch (error) {
         logError("Get appointment failed:", error);
 
@@ -385,7 +392,7 @@ export const createAppointment = async (req: Request, res: Response) => {
             }
         }
 
-        return res.status(201).json(serializeAppointment(appointment));
+        return res.status(201).json(await serializeAppointment(appointment));
     } catch (error) {
         logError("Create appointment failed:", error);
 
@@ -595,7 +602,7 @@ export const updateAppointment = async (req: Request, res: Response) => {
             include: appointmentIncludes,
         });
 
-        return res.status(200).json(serializeAppointment(appointment));
+        return res.status(200).json(await serializeAppointment(appointment));
     } catch (error) {
         logError("Update appointment failed:", error);
 
@@ -747,7 +754,7 @@ export const getAppointments = async (req: Request, res: Response) => {
         });
 
         return res.status(200).json({
-            data: appointments.map(serializeAppointment),
+            data: await Promise.all(appointments.map(serializeAppointment)),
         });
     } catch (error) {
         logError("List appointments failed:", error);
@@ -813,7 +820,7 @@ export const cancelAppointment = async (req: Request, res: Response) => {
             include: appointmentIncludes,
         });
 
-        return res.status(200).json(serializeAppointment(appointment));
+        return res.status(200).json(await serializeAppointment(appointment));
     } catch (error) {
         logError("Cancel appointment failed:", error);
 
