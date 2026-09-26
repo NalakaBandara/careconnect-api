@@ -21,9 +21,23 @@ const parseId = (value: string | string[] | undefined): bigint | null => {
 const parseDateOnly = (value: string): Date => new Date(`${value}T00:00:00.000Z`);
 const formatDateOnly = (value: Date): string => value.toISOString().substring(0, 10);
 
+// Combines the date-only appointmentDate column with the time-only startTime column into the
+// actual moment the appointment is scheduled to begin (both are stored/parsed as UTC).
+const appointmentStartMoment = (appointment: { appointmentDate: Date; startTime: Date }): Date =>
+    new Date(
+        Date.UTC(
+            appointment.appointmentDate.getUTCFullYear(),
+            appointment.appointmentDate.getUTCMonth(),
+            appointment.appointmentDate.getUTCDate(),
+            appointment.startTime.getUTCHours(),
+            appointment.startTime.getUTCMinutes(),
+            appointment.startTime.getUTCSeconds()
+        )
+    );
+
 const BOOKING_REFERENCE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-// Human-friendly lookup code shown to patients, e.g. CC-4821-MEH - not a security token
+
 const generateBookingReference = (): string => {
     const digits = crypto.randomInt(1000, 10000);
     const letters = Array.from({ length: 3 }, () =>
@@ -39,8 +53,7 @@ const appointmentIncludes = {
     service: true,
 };
 
-// QR encodes only the appointment ID. It's generated fresh on every response rather than
-// stored, since it's fully deterministic from the (immutable) id - no DB column needed.
+// for now i add appoinment id for qr
 const generateAppointmentQrCode = (appointmentId: bigint): Promise<string> =>
     QRCode.toDataURL(appointmentId.toString());
 
@@ -456,6 +469,29 @@ export const updateAppointment = async (req: Request, res: Response) => {
             endTime,
         } = req.body;
 
+        // This endpoint can also cancel an appointment (status: "CANCELLED"), so it needs the
+        // same guard as the dedicated cancelAppointment/DELETE endpoint, or a client could bypass
+        // it just by going through PATCH /:id or PATCH /:id/status instead.
+        if (status === "CANCELLED") {
+            if (existingAppointment.status === "CANCELLED") {
+                return res.status(409).json({
+                    error: {
+                        code: "ALREADY_CANCELLED",
+                        message: "This appointment has already been cancelled",
+                    },
+                });
+            }
+
+            if (appointmentStartMoment(existingAppointment) < new Date()) {
+                return res.status(409).json({
+                    error: {
+                        code: "APPOINTMENT_ALREADY_PASSED",
+                        message: "Cannot cancel an appointment that has already started or passed",
+                    },
+                });
+            }
+        }
+
         const isReschedule =
             doctorProfileId !== undefined ||
             clinicId !== undefined ||
@@ -801,6 +837,24 @@ export const cancelAppointment = async (req: Request, res: Response) => {
                 error: {
                     code: "FORBIDDEN",
                     message: "You do not have permission to cancel this appointment",
+                },
+            });
+        }
+
+        if (existingAppointment.status === "CANCELLED") {
+            return res.status(409).json({
+                error: {
+                    code: "ALREADY_CANCELLED",
+                    message: "This appointment has already been cancelled",
+                },
+            });
+        }
+
+        if (appointmentStartMoment(existingAppointment) < new Date()) {
+            return res.status(409).json({
+                error: {
+                    code: "APPOINTMENT_ALREADY_PASSED",
+                    message: "Cannot cancel an appointment that has already started or passed",
                 },
             });
         }
