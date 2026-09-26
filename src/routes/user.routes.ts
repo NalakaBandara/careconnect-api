@@ -9,6 +9,7 @@ import {
     updateMyProfile,
     getUserById,
     updateUserById,
+    anonymiseUser,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -19,5 +20,7 @@ router.get("/me", checkJwt, loadCurrentUser, getMyProfile);
 router.put("/me", checkJwt, loadCurrentUser, updateMyProfile);
 router.get("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), getUserById);
 router.put("/:id", checkJwt, loadCurrentUser, requireRoles("ADMIN"), updateUserById);
+// ADMIN, or the account's own owner, may anonymise it (ownership checked inside the controller)
+router.patch("/:id", checkJwt, loadCurrentUser, anonymiseUser);
 
 export default router;

@@ -21,6 +21,7 @@ model User {
   updatedAt                DateTime                   @updatedAt
   status                   String                     @default("ACTIVE") @db.VarChar(30)
   passwordHash             String?                    @db.VarChar(255)
+  anonymisedAt             DateTime?
   patientAppointments      Appointment[]              @relation("PatientAppointments")
   appointmentStatusHistory AppointmentStatusHistory[] @relation("StatusChangedBy")
   auditLogs                AuditLog[]

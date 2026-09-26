@@ -4,6 +4,18 @@ import { prisma } from "../config/prisma.js";
 import { hashPassword } from "../utils/password.js";
 import { fieldErrorResponse } from "../utils/errors.js";
 
+// ADMIN, or the account's own owner, may anonymise it
+const canManageUser = (currentUser: any, targetUserId: bigint): boolean => {
+    const roleNames: string[] =
+        currentUser?.userRoles?.map((userRole: any) => userRole.role.name) ?? [];
+
+    if (roleNames.includes("ADMIN")) {
+        return true;
+    }
+
+    return currentUser?.id === targetUserId;
+};
+
 export const getMyProfile = async (req: Request, res: Response) => {
     // loadCurrentUser has already resolved and attached the DB row (with roles)
     const user = res.locals.user;
@@ -453,6 +465,118 @@ export const updateUserById = async (req: Request, res: Response) => {
             error: {
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to update user",
+            },
+        });
+    }
+};
+
+// PATCH /:id?anonymisation=true - ADMIN, or the account owner, scrubs the user's PII in place.
+// The row itself (and every appointment/audit-log/etc. that references it) is kept for
+// referential integrity; only the personal fields are overwritten.
+export const anonymiseUser = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        let userId: bigint;
+
+        try {
+            userId = BigInt(id as string);
+        } catch {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "id must be a valid numeric identifier",
+                },
+            });
+        }
+
+        if (req.query.anonymisation !== "true") {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "anonymisation=true query parameter is required to use this endpoint",
+                },
+            });
+        }
+
+        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+
+        if (!targetUser) {
+            return res.status(404).json({
+                error: {
+                    code: "USER_NOT_FOUND",
+                    message: "CareConnect user not found",
+                },
+            });
+        }
+
+        const currentUser = res.locals.user;
+
+        if (!canManageUser(currentUser, userId)) {
+            return res.status(403).json({
+                error: {
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to anonymise this user",
+                },
+            });
+        }
+
+        if (targetUser.anonymisedAt) {
+            return res.status(409).json({
+                error: {
+                    code: "CONFLICT",
+                    message: "This user has already been anonymised",
+                },
+            });
+        }
+
+        const anonymisedAt = new Date();
+
+        const [anonymised] = await prisma.$transaction([
+            prisma.user.update({
+                where: { id: userId },
+                data: {
+                    // Deterministic from the id, so it can never collide with a real or another
+                    // anonymised user's email, even though email is unique and non-nullable.
+                    email: `deleted-user-${userId.toString()}@anonymised.local`,
+                    firstName: "Redacted",
+                    lastName: "User",
+                    dateOfBirth: null,
+                    phone: null,
+                    profilePhoto: null,
+                    nic: null,
+                    nicPhoto: null,
+                    // Nulling this blocks login: auth.controller's login() treats a missing
+                    // passwordHash the same as a wrong password.
+                    passwordHash: null,
+                    status: "ANONYMISED",
+                    anonymisedAt,
+                },
+            }),
+            prisma.auditLog.create({
+                data: {
+                    userId: currentUser.id,
+                    action: "ANONYMISE",
+                    entityType: "User",
+                    entityId: userId,
+                },
+            }),
+        ]);
+
+        return res.status(200).json({
+            data: {
+                id: anonymised.id.toString(),
+                status: anonymised.status,
+                anonymisedAt: anonymised.anonymisedAt?.toISOString() ?? null,
+            },
+        });
+    } catch (error) {
+        logError("Anonymise user failed:", error);
+
+        return res.status(500).json({
+            error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to anonymise user",
             },
         });
     }
