@@ -222,6 +222,10 @@ export const createAppointment = async (req: Request, res: Response) => {
     try {
         const currentUser = res.locals.user;
 
+        const roleNames: string[] =
+            currentUser?.userRoles?.map((userRole: any) => userRole.role.name) ?? [];
+        const isAdmin = roleNames.includes("ADMIN");
+
         const {
             patientId,
             doctorProfileId,
@@ -250,10 +254,7 @@ export const createAppointment = async (req: Request, res: Response) => {
                 });
             }
 
-            const roleNames: string[] =
-                currentUser?.userRoles?.map((userRole: any) => userRole.role.name) ?? [];
-
-            if (parsedPatientId !== currentUser.id && !roleNames.includes("ADMIN")) {
+            if (parsedPatientId !== currentUser.id && !isAdmin) {
                 return res.status(403).json({
                     error: {
                         code: "FORBIDDEN",
@@ -335,13 +336,27 @@ export const createAppointment = async (req: Request, res: Response) => {
         }
 
         const parsedAppointmentDate = parseDateOnly(appointmentDate);
+        const parsedStartTime = parseTime(startTime);
+
+        // ADMIN may backdate a booking (e.g. logging a walk-in retroactively); everyone else can't.
+        if (
+            !isAdmin &&
+            appointmentStartMoment({ appointmentDate: parsedAppointmentDate, startTime: parsedStartTime }) < new Date()
+        ) {
+            return res.status(400).json(
+                fieldErrorResponse(
+                    { appointmentDate: ["Cannot book an appointment in the past"] },
+                    "Cannot book an appointment in the past"
+                )
+            );
+        }
 
         const conflict = await prisma.appointment.findFirst({
             where: {
                 doctorProfileId: parsedDoctorProfileId,
                 clinicId: parsedClinicId,
                 appointmentDate: parsedAppointmentDate,
-                startTime: parseTime(startTime),
+                startTime: parsedStartTime,
                 status: { not: "CANCELLED" },
             },
         });
@@ -371,7 +386,7 @@ export const createAppointment = async (req: Request, res: Response) => {
                         serviceId: parsedServiceId,
                         doctorScheduleId: parsedDoctorScheduleId,
                         appointmentDate: parsedAppointmentDate,
-                        startTime: parseTime(startTime),
+                        startTime: parsedStartTime,
                         endTime: parseTime(endTime),
                         status: "PENDING",
                         reason: reason || null,
@@ -455,6 +470,10 @@ export const updateAppointment = async (req: Request, res: Response) => {
                 },
             });
         }
+
+        const roleNames: string[] =
+            currentUser?.userRoles?.map((userRole: any) => userRole.role.name) ?? [];
+        const isAdmin = roleNames.includes("ADMIN");
 
         const {
             status,
@@ -549,6 +568,19 @@ export const updateAppointment = async (req: Request, res: Response) => {
                 : existingAppointment.appointmentDate;
             const parsedStartTime = startTime ? parseTime(startTime) : existingAppointment.startTime;
             const parsedEndTime = endTime ? parseTime(endTime) : existingAppointment.endTime;
+
+            // ADMIN may reschedule into the past too (same exemption as createAppointment).
+            if (
+                !isAdmin &&
+                appointmentStartMoment({ appointmentDate: parsedAppointmentDate, startTime: parsedStartTime }) < new Date()
+            ) {
+                return res.status(400).json(
+                    fieldErrorResponse(
+                        { appointmentDate: ["Cannot reschedule an appointment to a date/time in the past"] },
+                        "Cannot reschedule an appointment to a date/time in the past"
+                    )
+                );
+            }
 
             const [doctorProfile, clinic, service, doctorSchedule] = await Promise.all([
                 prisma.doctorProfile.findUnique({ where: { id: parsedDoctorProfileId } }),

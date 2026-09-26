@@ -600,10 +600,41 @@ export const updateDoctorSchedule = async (req: Request, res: Response) => {
     }
 };
 
+// Pure helper: generates the slot list for one day, given its schedule and already-booked start
+// times. Shared by both the single-date and date-range branches of getDoctorAvailableSlots below.
+const computeDaySlots = (
+    schedule: { startTime: Date; endTime: Date; slotDurationMinutes: number },
+    bookedStartTimes: Set<string>
+): { startTime: string; endTime: string; available: boolean }[] => {
+    const slots: { startTime: string; endTime: string; available: boolean }[] = [];
+
+    let cursor = schedule.startTime.getTime();
+    const scheduleEnd = schedule.endTime.getTime();
+    const stepMs = schedule.slotDurationMinutes * 60 * 1000;
+
+    while (cursor + stepMs <= scheduleEnd) {
+        const slotStart = new Date(cursor);
+        const slotEnd = new Date(cursor + stepMs);
+        const slotStartStr = formatTime(slotStart) as string;
+
+        slots.push({
+            startTime: slotStartStr,
+            endTime: formatTime(slotEnd) as string,
+            available: !bookedStartTimes.has(slotStartStr),
+        });
+
+        cursor += stepMs;
+    }
+
+    return slots;
+};
+
+const MAX_AVAILABILITY_RANGE_DAYS = 31;
+
 export const getDoctorAvailableSlots = async (req: Request, res: Response) => {
     try {
         const doctorProfileId = parseId(req.params.id);
-        const { clinicId, date, serviceId } = req.query;
+        const { clinicId, date, fromDate, toDate, serviceId } = req.query;
 
         if (doctorProfileId === null) {
             return res.status(400).json({
@@ -616,86 +647,185 @@ export const getDoctorAvailableSlots = async (req: Request, res: Response) => {
 
         const parsedClinicId = parseId(clinicId as string);
 
-        if (parsedClinicId === null || !date) {
+        if (parsedClinicId === null) {
             return res.status(400).json({
                 error: {
                     code: "INVALID_REQUEST",
-                    message: "clinicId and date are required",
+                    message: "clinicId is required",
                 },
             });
         }
 
-        const targetDate = new Date(`${date}T00:00:00.000Z`);
+        const isRangeRequest = fromDate !== undefined || toDate !== undefined;
 
-        if (isNaN(targetDate.getTime())) {
+        if (date && isRangeRequest) {
             return res.status(400).json({
                 error: {
                     code: "INVALID_REQUEST",
-                    message: "date must be a valid date (YYYY-MM-DD)",
+                    message: "Provide either date, or fromDate and toDate, not both",
                 },
             });
         }
 
-        const dayOfWeek = targetDate.getUTCDay();
+        if (!date && !isRangeRequest) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "date, or fromDate and toDate, are required",
+                },
+            });
+        }
 
-        const schedule = await prisma.doctorSchedule.findFirst({
-            where: {
-                doctorProfileId,
-                clinicId: parsedClinicId,
-                dayOfWeek,
-                isActive: true,
-            },
-        });
+        const serviceIdValue = serviceId ? (serviceId as string) : null;
 
-        if (!schedule) {
+        // Single date - same request/response shape as before this change.
+        if (date) {
+            const targetDate = new Date(`${date}T00:00:00.000Z`);
+
+            if (isNaN(targetDate.getTime())) {
+                return res.status(400).json({
+                    error: {
+                        code: "INVALID_REQUEST",
+                        message: "date must be a valid date (YYYY-MM-DD)",
+                    },
+                });
+            }
+
+            const schedule = await prisma.doctorSchedule.findFirst({
+                where: {
+                    doctorProfileId,
+                    clinicId: parsedClinicId,
+                    dayOfWeek: targetDate.getUTCDay(),
+                    isActive: true,
+                },
+            });
+
+            if (!schedule) {
+                return res.status(200).json({
+                    doctorId: doctorProfileId.toString(),
+                    clinicId: parsedClinicId.toString(),
+                    serviceId: serviceIdValue,
+                    date,
+                    slots: [],
+                });
+            }
+
+            const existingAppointments = await prisma.appointment.findMany({
+                where: {
+                    doctorProfileId,
+                    clinicId: parsedClinicId,
+                    appointmentDate: targetDate,
+                    status: { not: "CANCELLED" },
+                },
+            });
+
+            const bookedStartTimes = new Set(
+                existingAppointments.map((appointment) => formatTime(appointment.startTime) as string)
+            );
+
             return res.status(200).json({
                 doctorId: doctorProfileId.toString(),
                 clinicId: parsedClinicId.toString(),
-                serviceId: serviceId ? (serviceId as string) : null,
+                serviceId: serviceIdValue,
                 date,
-                slots: [],
+                slots: computeDaySlots(schedule, bookedStartTimes),
             });
         }
 
-        const existingAppointments = await prisma.appointment.findMany({
-            where: {
-                doctorProfileId,
-                clinicId: parsedClinicId,
-                appointmentDate: targetDate,
-                status: { not: "CANCELLED" },
-            },
-        });
-
-        const bookedStartTimes = new Set(
-            existingAppointments.map((appointment) => formatTime(appointment.startTime))
-        );
-
-        const slots: { startTime: string; endTime: string; available: boolean }[] = [];
-
-        let cursor = schedule.startTime.getTime();
-        const scheduleEnd = schedule.endTime.getTime();
-        const stepMs = schedule.slotDurationMinutes * 60 * 1000;
-
-        while (cursor + stepMs <= scheduleEnd) {
-            const slotStart = new Date(cursor);
-            const slotEnd = new Date(cursor + stepMs);
-            const slotStartStr = formatTime(slotStart) as string;
-
-            slots.push({
-                startTime: slotStartStr,
-                endTime: formatTime(slotEnd) as string,
-                available: !bookedStartTimes.has(slotStartStr),
+        // Date range - fromDate and toDate are required together.
+        if (!fromDate || !toDate) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "fromDate and toDate are both required together",
+                },
             });
+        }
 
-            cursor += stepMs;
+        const fromDateObj = new Date(`${fromDate}T00:00:00.000Z`);
+        const toDateObj = new Date(`${toDate}T00:00:00.000Z`);
+
+        if (isNaN(fromDateObj.getTime()) || isNaN(toDateObj.getTime())) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "fromDate and toDate must be valid dates (YYYY-MM-DD)",
+                },
+            });
+        }
+
+        const dayCount = Math.round((toDateObj.getTime() - fromDateObj.getTime()) / 86400000) + 1;
+
+        if (dayCount < 1) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: "fromDate must be before or equal to toDate",
+                },
+            });
+        }
+
+        if (dayCount > MAX_AVAILABILITY_RANGE_DAYS) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_REQUEST",
+                    message: `Date range cannot exceed ${MAX_AVAILABILITY_RANGE_DAYS} days`,
+                },
+            });
+        }
+
+        // Only 2 queries total, regardless of how many days are in the range: every active
+        // schedule for this doctor+clinic (at most 7 rows, one per weekday) and every
+        // non-cancelled appointment across the whole range, both grouped in memory below
+        // instead of querying once per day.
+        const [schedules, existingAppointments] = await Promise.all([
+            prisma.doctorSchedule.findMany({
+                where: { doctorProfileId, clinicId: parsedClinicId, isActive: true },
+            }),
+            prisma.appointment.findMany({
+                where: {
+                    doctorProfileId,
+                    clinicId: parsedClinicId,
+                    appointmentDate: { gte: fromDateObj, lte: toDateObj },
+                    status: { not: "CANCELLED" },
+                },
+            }),
+        ]);
+
+        const scheduleByDayOfWeek = new Map(schedules.map((schedule) => [schedule.dayOfWeek, schedule]));
+
+        const bookedByDate = new Map<string, Set<string>>();
+
+        for (const appointment of existingAppointments) {
+            const dateKey = appointment.appointmentDate.toISOString().substring(0, 10);
+
+            if (!bookedByDate.has(dateKey)) {
+                bookedByDate.set(dateKey, new Set());
+            }
+
+            bookedByDate.get(dateKey)!.add(formatTime(appointment.startTime) as string);
+        }
+
+        const days: { date: string; slots: { startTime: string; endTime: string; available: boolean }[] }[] = [];
+
+        for (let i = 0; i < dayCount; i++) {
+            const cursorDate = new Date(fromDateObj.getTime() + i * 86400000);
+            const dateKey = cursorDate.toISOString().substring(0, 10);
+            const schedule = scheduleByDayOfWeek.get(cursorDate.getUTCDay());
+
+            days.push({
+                date: dateKey,
+                slots: schedule ? computeDaySlots(schedule, bookedByDate.get(dateKey) ?? new Set()) : [],
+            });
         }
 
         return res.status(200).json({
             doctorId: doctorProfileId.toString(),
             clinicId: parsedClinicId.toString(),
-            serviceId: serviceId ? (serviceId as string) : null,
-            date,
-            slots,
+            serviceId: serviceIdValue,
+            fromDate,
+            toDate,
+            days,
         });
     } catch (error) {
         logError("Get doctor available slots failed:", error);
